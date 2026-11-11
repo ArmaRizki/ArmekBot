@@ -29,7 +29,7 @@ linters:
         - (*os.File).Close
         - (*github.com/godeps/opus.Encoder).Reset
         - (*github.com/ArmaRizki/ArmekBot/pkg/music/stream.RecoveryStream).Close
-        - (*github.com/ArmaRizki/ArmekBot/pkg/music/sink.SpeakerProvider).Close
+        - (*github.com/ArmaRizki/ArmekBot/pkg/music/sink/speaker.SpeakerProvider).Close
         - fmt.Fprint
         - fmt.Fprintf
         - fmt.Fprintln

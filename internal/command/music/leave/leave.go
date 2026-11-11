@@ -56,7 +56,9 @@ func (c *Leave) Run(ctx interface{}) error {
 
 	// Clear queue, stop playback, and disconnect from voice.
 	player.ClearQueue()
-	player.Stop(true)
+	if err := player.Stop(true); err != nil {
+		slashCtx.AppLog.Warn().Str("guild_id", guildID).Err(err).Msg("player_stop_failed")
+	}
 	if err := c.Bot.UpdatePlaybackStatus(s, e, guildID, reply.PlaybackFinishedEmbed()); err != nil {
 		slashCtx.AppLog.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
 	}
