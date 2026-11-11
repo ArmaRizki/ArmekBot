@@ -1,4 +1,4 @@
-![ArmekBot banner](https://raw.githubusercontent.com/ArmaRizki/ArmekBot/master/assets/readme-banner.webp)
+![ArmekBot banner](https://raw.githubusercontent.com/ArmaRizki/ArmekBot/main/assets/readme-banner.webp)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/ArmaRizki/ArmekBot.svg)](https://pkg.go.dev/github.com/ArmaRizki/ArmekBot) [![Release](https://img.shields.io/github/v/release/ArmaRizki/ArmekBot)](https://github.com/ArmaRizki/ArmekBot/releases) [![License](https://img.shields.io/github/license/ArmaRizki/ArmekBot)](LICENSE)
 
