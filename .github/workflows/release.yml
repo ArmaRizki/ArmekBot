@@ -82,7 +82,7 @@ jobs:
                   mkdir -p dist
                   BUILD_DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ")
                   GIT_COMMIT=$(git rev-parse --short HEAD)
-                  go build -trimpath -ldflags="-s -w -X github.com/keshon/buildinfo.Version=${GITHUB_REF_NAME} -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE}" -o dist/melodix-discord${{ steps.bin.outputs.ext }} ./cmd/discord/
+                  go build -trimpath -ldflags="-s -w -X github.com/keshon/buildinfo.Version=${GITHUB_REF_NAME} -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE}" -o dist/armekbot-discord${{ steps.bin.outputs.ext }} ./cmd/discord/
 
             - name: Build CLI player
               env:
@@ -90,11 +90,11 @@ jobs:
                   GOARCH: ${{ matrix.goarch }}
                   CGO_ENABLED: ${{ steps.cgo.outputs.enabled }}
               run: |
-                  go build -trimpath -ldflags="-s -w -X github.com/keshon/buildinfo.Version=${GITHUB_REF_NAME} -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE}" -o dist/melodix-cli${{ steps.bin.outputs.ext }} ./cmd/cli/
+                  go build -trimpath -ldflags="-s -w -X github.com/keshon/buildinfo.Version=${GITHUB_REF_NAME} -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE}" -o dist/armekbot-cli${{ steps.bin.outputs.ext }} ./cmd/cli/
 
             - name: Prepare release bundle
               run: |
-                  PKG_ROOT="melodix-${{ matrix.goos }}-${{ matrix.goarch }}"
+                  PKG_ROOT="armekbot-${{ matrix.goos }}-${{ matrix.goarch }}"
                   mkdir -p "${PKG_ROOT}"
                   cp dist/* "${PKG_ROOT}/"
                   cp README.md LICENSE "${PKG_ROOT}/"

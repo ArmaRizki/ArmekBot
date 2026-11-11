@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
+var youtubeRegex = regexp.MustCompile(`(?:https?:\/\/)?(?:www\.|music\.)?(youtube\.com|youtu\.be)\/\S+`)
+
 func isYouTubeURL(input string) bool {
-	youtubeRegex := regexp.MustCompile(`(?:https?:\/\/)?(?:www\.|music\.)?(youtube\.com|youtu\.be)\/\S+`)
 	return youtubeRegex.MatchString(input)
 }
 

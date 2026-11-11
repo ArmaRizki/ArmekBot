@@ -1,12 +1,20 @@
 package help
 
 import (
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/keshon/buildinfo"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
+	"github.com/keshon/command"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// formatCommand renders a command with its subcommands. Registry entries are
+// middleware-wrapped, so the root must be unwrapped before the slash
+// definition can be read.
+func formatCommand(c command.Command) string {
+	return cmdadapter.FormatCommandWithSubcommands(command.Root(c))
+}
 
 type Help struct{}
 

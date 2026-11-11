@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Melodix — self-hosted Discord music bot</title>
+    <title>ArmekBot — self-hosted Discord music bot</title>
     <meta name="description"
-      content="Melodix is a self-hosted Discord music bot in Go. Streams YouTube, SoundCloud and internet radio, and treats every failure as a recoverable event.">
+      content="ArmekBot is a self-hosted Discord music bot in Go. Streams YouTube, SoundCloud and internet radio, and treats every failure as a recoverable event.">
     <style>
   /* ============ tokens ============ */
   :root {
@@ -174,7 +174,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: url(https://raw.githubusercontent.com/keshon/melodix/master/assets/avatar.webp);
+    background: url(https://raw.githubusercontent.com/ArmaRizki/ArmekBot/master/assets/avatar.webp);
     background-size: contain;
     color: #fff;
     display: grid;
@@ -375,13 +375,13 @@
 
     <div class="wrap">
       <nav>
-        <span class="brand mono">Melodix Discord Player</span>
+        <span class="brand mono">ArmekBot Discord Player</span>
         <div class="links">
           <a href="#survives">Why</a>
           <a href="#quickstart">Quick start</a>
           <a href="#commands">Commands</a>
           <a href="#downloads">Downloads</a>
-          <a href="https://github.com/keshon/melodix"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg> GitHub</a>
+          <a href="https://github.com/ArmaRizki/ArmekBot"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg> GitHub</a>
         </div>
       </nav>
 
@@ -390,7 +390,7 @@
           <div>
             <p class="eyebrow">discord music bot · self-hosted · go · open source</p>
             <h1>Playback should <mark>survive</mark>.</h1>
-            <p class="lede">Melodix streams YouTube, SoundCloud and internet
+            <p class="lede">ArmekBot streams YouTube, SoundCloud and internet
               radio into your
               Discord server — and treats every failure as a recoverable event.
               <strong>Flaky streams, dead voice connections, gateway
@@ -400,23 +400,23 @@
               <a class="btn btn-primary" href="#downloads">Download
                 Binaries</a>
               <a class="btn btn-ghost"
-                href="https://github.com/keshon/melodix"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg>Source on GitHub</a>
+                href="https://github.com/ArmaRizki/ArmekBot"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg>Source on GitHub</a>
             </div>
             <div class="install-line">
               <span class="dollar">$</span>
               <span id="installCmd">go build ./cmd/discord && DISCORD_TOKEN=···
-                ./melodix-discord</span>
+                ./armekbot-discord</span>
               <button class="copy-btn" id="copyBtn" type="button">copy</button>
             </div>
           </div>
 
-          <div class="demo" aria-label="Melodix in action">
+          <div class="demo" aria-label="ArmekBot in action">
             <div class="discord">
               <div class="dc-msg">
                 <div class="dc-avatar"></div>
                 <div class="dc-body">
                   <div class="dc-head">
-                    <span class="dc-name">Melodix</span>
+                    <span class="dc-name">ArmekBot</span>
                     <span class="dc-bot">BOT</span>
                     <span class="dc-time" id="dcTime">Today at 12:32</span>
                   </div>
@@ -437,10 +437,10 @@
               </div>
             </div>
 
-            <div class="terminal" aria-label="Melodix log output">
+            <div class="terminal" aria-label="ArmekBot log output">
               <div class="term-bar">
                 <span class="tl tl-r"></span><span class="tl tl-y"></span><span class="tl tl-g"></span>
-                <span class="term-title">melodix · logs</span>
+                <span class="term-title">armekbot · logs</span>
               </div>
               <div class="term-body" id="log" aria-live="off"></div>
             </div>
@@ -452,15 +452,15 @@
         <p class="kicker">why it survives</p>
         <h2>Every track carries its own fallback chain.</h2>
         <p class="prose">Public music bots come and go, usually with a
-          cease-and-desist attached. Melodix is the opposite deal: a small
+          cease-and-desist attached. ArmekBot is the opposite deal: a small
           binary you run yourself, with your own token, on your own machine —
           built around the assumption that <strong>sources break, and that's
           fine.</strong></p>
-        <p class="prose">When someone pastes a link, Melodix has to turn that web
+        <p class="prose">When someone pastes a link, ArmekBot has to turn that web
           page into an actual audio stream it can pipe into a voice channel. The
           component that does this is called a <em>parser</em> — and YouTube
           fights it constantly, reshuffling its internals every few weeks. So
-          Melodix never bets on a single one. It keeps a <strong>chain</strong> of
+          ArmekBot never bets on a single one. It keeps a <strong>chain</strong> of
           parsers, ordered fastest-first, and walks down it until one delivers a
           playable stream. The panel above is that chain running live: the embed
           your users see, and the log stream underneath. Tap each backend to see
@@ -479,7 +479,7 @@
 
         <div class="tab-detail" id="detail" role="tabpanel">
           <h3 id="detailTitle">ytnative <span class="chip">built in-house · zero deps</span></h3>
-          <p id="detailBody">Melodix's own extractor, written for this project. It
+          <p id="detailBody">ArmekBot's own extractor, written for this project. It
             speaks YouTube's private <em>InnerTube</em> API — the same protocol the
             official phone and TV apps use — posing as the Android VR client, which
             hands back direct audio links with nothing to decrypt. No external
@@ -523,14 +523,14 @@
           <div class="qs">
             <h3>Discord bot</h3>
             <pre><span class="c"># token from the Discord Developer Portal</span>
-<span class="a">$</span> go build -o melodix-discord ./cmd/discord
-<span class="a">$</span> DISCORD_TOKEN=your-token ./melodix-discord</pre>
+<span class="a">$</span> go build -o armekbot-discord ./cmd/discord
+<span class="a">$</span> DISCORD_TOKEN=your-token ./armekbot-discord</pre>
           </div>
           <div class="qs">
             <h3>Terminal player</h3>
             <pre><span class="c"># no Discord account required</span>
-<span class="a">$</span> go build -o melodix-cli ./cmd/cli
-<span class="a">$</span> ./melodix-cli</pre>
+<span class="a">$</span> go build -o armekbot-cli ./cmd/cli
+<span class="a">$</span> ./armekbot-cli</pre>
           </div>
         </div>
         <p class="dl-note">You need FFmpeg in <span class="mono">PATH</span>;
@@ -538,7 +538,7 @@
           Full setup — bot creation, invite link, every config knob, Docker —
           lives in
           <a
-            href="https://github.com/keshon/melodix/blob/main/docs/running.md">docs/running.md</a>.</p>
+            href="https://github.com/ArmaRizki/ArmekBot/blob/main/docs/running.md">docs/running.md</a>.</p>
       </section>
 
       <section id="commands">
@@ -562,11 +562,11 @@
           <div class="cmd"><code>/about</code><span>where this bot came
               from</span></div>
         </div>
-        <p class="dl-note">Try it live in the <a
-            href="https://discord.gg/uDnTenPxAY">Ctrl+Z server</a> —
-          join a voice channel and play something in <span
-            class="mono">#music-spam</span>. Or browse the
-          <a href="https://github.com/keshon/melodix#commands">full command
+        <p class="dl-note">Run it yourself: create a bot in the <a
+            href="https://discord.com/developers/applications">Discord Developer
+            Portal</a>, copy <span class="mono">.env.example</span> to
+          <span class="mono">.env</span>, and fill in your token. Or browse the
+          <a href="https://github.com/ArmaRizki/ArmekBot#commands">full command
             reference on GitHub</a>.</p>
       </section>
 
@@ -574,17 +574,17 @@
         <p class="kicker">downloads</p>
         <h2>Prebuilt binaries.</h2>
         <div class="dl-grid">
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-linux"/></svg>linux</span><span class="arch">amd64 →</span></a>
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-linux"/></svg>linux</span><span class="arch">arm64 →</span></a>
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-windows"/></svg>windows</span><span class="arch">amd64 →</span></a>
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-windows"/></svg>windows</span><span class="arch">arm64 →</span></a>
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-apple"/></svg>macos</span><span class="arch">amd64 →</span></a>
-          <a class="dl" href="https://github.com/keshon/melodix/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-apple"/></svg>macos</span><span class="arch">arm64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-linux"/></svg>linux</span><span class="arch">amd64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-linux"/></svg>linux</span><span class="arch">arm64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-windows"/></svg>windows</span><span class="arch">amd64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-windows"/></svg>windows</span><span class="arch">arm64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-apple"/></svg>macos</span><span class="arch">amd64 →</span></a>
+          <a class="dl" href="https://github.com/ArmaRizki/ArmekBot/releases/latest"><span class="os"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-apple"/></svg>macos</span><span class="arch">arm64 →</span></a>
         </div>
         <p class="dl-note">Each bundle ships both binaries, a ready-to-edit
           <span class="mono">.env</span>, and the docs.
           Or run it in <a
-            href="https://github.com/keshon/melodix/tree/main/docker">Docker</a>.</p>
+            href="https://github.com/ArmaRizki/ArmekBot/tree/main/docker">Docker</a>.</p>
       </section>
 
       <footer>
@@ -593,20 +593,20 @@
             Built by one person, on purpose</span>
           <span>
             <a
-              href="https://github.com/keshon/melodix/blob/main/docs/architecture.md">Architecture</a>
+              href="https://github.com/ArmaRizki/ArmekBot/blob/main/docs/architecture.md">Architecture</a>
             ·
             <a
-              href="https://github.com/keshon/melodix/blob/main/docs/conventions.md">Conventions</a>
+              href="https://github.com/ArmaRizki/ArmekBot/blob/main/docs/conventions.md">Conventions</a>
             ·
             <a
-              href="https://github.com/keshon/melodix/blob/main/docs/running.md">How-To</a>
+              href="https://github.com/ArmaRizki/ArmekBot/blob/main/docs/running.md">How-To</a>
             ·
-            <a href="https://github.com/keshon/melodix"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg>GitHub</a>
+            <a href="https://github.com/ArmaRizki/ArmekBot"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-github"/></svg>GitHub</a>
           </span>
         </div>
         <div class="foot-legal">
           <span>© <span id="yr">2026</span> <span class="brand" style="color:var(--text)">
-              Melodix</span>. All rights reserved.</span>
+              ArmekBot</span>. All rights reserved.</span>
           <span>Developed by <strong>Señor Mega</strong></span>
         </div>
       </footer>
@@ -783,17 +783,17 @@
     {
       title: "ytnative",
       badge: "built in-house · zero deps",
-      body: 'Melodix’s own extractor, written for this project. It speaks YouTube’s private <em>InnerTube</em> API — the same protocol the official phone and TV apps use — posing as the Android VR client, which hands back direct audio links with nothing to decrypt. No external programs, no embedded JavaScript engine: just plain HTTP calls from Go. It’s the fastest route and the default. When YouTube eventually changes something, ytnative <strong>fails instantly instead of hanging</strong>, and the fix on our side is usually a single version number.'
+      body: 'ArmekBot’s own extractor, written for this project. It speaks YouTube’s private <em>InnerTube</em> API — the same protocol the official phone and TV apps use — posing as the Android VR client, which hands back direct audio links with nothing to decrypt. No external programs, no embedded JavaScript engine: just plain HTTP calls from Go. It’s the fastest route and the default. When YouTube eventually changes something, ytnative <strong>fails instantly instead of hanging</strong>, and the fix on our side is usually a single version number.'
     },
     {
       title: "kkdai",
       badge: "open-source library",
-      body: '<a href="https://github.com/kkdai/youtube" target="_blank" rel="noopener">kkdai/youtube</a> is a popular open-source Go library for pulling audio from YouTube. Where ytnative avoids the hard parts, kkdai takes them on: it unscrambles YouTube’s obfuscated <em>signature cipher</em> through an embedded JavaScript interpreter, unlocking streams the native client is refused. Heavier and slower, but it rescues protected and age-restricted tracks the fast path can’t — and it still runs <strong>entirely inside the Melodix binary</strong>, nothing to install.'
+      body: '<a href="https://github.com/kkdai/youtube" target="_blank" rel="noopener">kkdai/youtube</a> is a popular open-source Go library for pulling audio from YouTube. Where ytnative avoids the hard parts, kkdai takes them on: it unscrambles YouTube’s obfuscated <em>signature cipher</em> through an embedded JavaScript interpreter, unlocking streams the native client is refused. Heavier and slower, but it rescues protected and age-restricted tracks the fast path can’t — and it still runs <strong>entirely inside the ArmekBot binary</strong>, nothing to install.'
     },
     {
       title: "yt-dlp",
       badge: "external tool · optional",
-      body: '<a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> is the industry-standard command-line downloader — a community-maintained successor to youtube-dl that supports over a thousand sites. Melodix only reaches for it once both native parsers have failed; if yt-dlp can’t play a track, effectively nothing can. It’s the one backend that lives <em>outside</em> the binary, which makes it <strong>entirely optional</strong>: skip installing it and the chain simply ends one rung sooner.'
+      body: '<a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> is the industry-standard command-line downloader — a community-maintained successor to youtube-dl that supports over a thousand sites. ArmekBot only reaches for it once both native parsers have failed; if yt-dlp can’t play a track, effectively nothing can. It’s the one backend that lives <em>outside</em> the binary, which makes it <strong>entirely optional</strong>: skip installing it and the chain simply ends one rung sooner.'
     }
   ];
 

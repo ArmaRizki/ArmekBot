@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
 
 	"github.com/kkdai/youtube/v2"
 )

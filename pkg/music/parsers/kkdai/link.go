@@ -3,11 +3,10 @@ package kkdai
 import (
 	"errors"
 	"fmt"
-	"sync"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	ffmpegparser "github.com/keshon/melodix/pkg/music/parsers/ffmpeg"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	ffmpegparser "github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ffmpeg"
 
 	"github.com/kkdai/youtube/v2"
 )
@@ -18,44 +17,13 @@ func kkdaiLink(track *parsers.Track, seekSec float64) (opus.Reader, func(), erro
 		return nil, nil, err
 	}
 
-	type res struct {
-		client *youtube.Client
-		video  *youtube.Video
-		err    error
+	client := &youtube.Client{}
+	video, err := client.GetVideo(videoID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("kkdai: youtube client: %w", err)
 	}
-
-	ch := make(chan res, 1)
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		client := &youtube.Client{}
-		video, err := client.GetVideo(videoID)
-		ch <- res{client: client, video: video, err: err}
-	}()
-
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
-	var client *youtube.Client
-	var video *youtube.Video
-	var lastErr error
-
-	for r := range ch {
-		if r.err == nil {
-			client = r.client
-			video = r.video
-			break
-		} else {
-			lastErr = r.err
-		}
-	}
-
-	if client == nil || video == nil {
-		return nil, nil, fmt.Errorf("kkdai: youtube client: %w", lastErr)
+	if video == nil {
+		return nil, nil, errors.New("kkdai: youtube client: no video")
 	}
 
 	track.Duration = video.Duration

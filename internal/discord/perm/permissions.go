@@ -1,8 +1,8 @@
 package perm
 
 import (
+	"github.com/ArmaRizki/ArmekBot/internal/config"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/config"
 )
 
 // IsAdministrator reports whether a member has administrator privileges in their guild,

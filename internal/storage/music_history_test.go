@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/keshon/datastore"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sources"
 	"github.com/rs/zerolog"
 )
 

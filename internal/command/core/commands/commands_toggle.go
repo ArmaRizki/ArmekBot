@@ -3,25 +3,25 @@ package commands
 import (
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
 )
 
 // RunCmdEnable enables a command group for the guild.
-func RunCmdEnable(s *discordgo.Session, e *discordgo.InteractionCreate, stor storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
+func RunCmdEnable(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
 	group := subOptionString(sub, "group")
 	return runCmdSetGroupState(s, e, stor, syncer, group, true)
 }
 
 // RunCmdDisable disables a command group for the guild.
-func RunCmdDisable(s *discordgo.Session, e *discordgo.InteractionCreate, stor storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
+func RunCmdDisable(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
 	group := subOptionString(sub, "group")
 	return runCmdSetGroupState(s, e, stor, syncer, group, false)
 }
 
-func runCmdSetGroupState(s *discordgo.Session, e *discordgo.InteractionCreate, stor storage.Storage, syncer cmdadapter.CommandSyncer, group string, enabled bool) error {
+func runCmdSetGroupState(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage, syncer cmdadapter.CommandSyncer, group string, enabled bool) error {
 	if group == "" {
 		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
 			Description: "Missing required group option.",

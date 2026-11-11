@@ -546,4 +546,4 @@ If set, `/join` and `/leave` are not registered. `/stop` reverts to original beh
 
 ---
 
-*Design based on melodix architecture at commit `264c050`.*
+*Design based on armekbot architecture at commit `264c050`.*

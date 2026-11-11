@@ -1,12 +1,12 @@
 package discord
 
 import (
+	"github.com/ArmaRizki/ArmekBot/internal/discord/watchdog"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/watchdog"
 )
 
 func (b *Bot) wireSessionHandlers(dg *discordgo.Session, tracker *watchdog.Tracker) {
-	b.configureIntents()
+	b.configureIntents(dg)
 	dg.AddHandler(func(s *discordgo.Session, e *discordgo.Event) {
 		_ = s
 		_ = e
@@ -18,7 +18,5 @@ func (b *Bot) wireSessionHandlers(dg *discordgo.Session, tracker *watchdog.Track
 	})
 	dg.AddHandler(b.onGuildCreate)
 	dg.AddHandler(b.onGuildDelete)
-	dg.AddHandler(b.onMessageCreate)
-	dg.AddHandler(b.onMessageReactionAdd)
 	dg.AddHandler(b.onInteractionCreate)
 }

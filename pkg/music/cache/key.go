@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 )
 
 // Key returns a stable, source-agnostic content key for a track, or ok=false

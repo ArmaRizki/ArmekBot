@@ -1,13 +1,13 @@
 package reply
 
 import (
+	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/perm"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/perm"
 )
 
 const EmbedColor = 0xb01e66
@@ -32,17 +32,21 @@ var DefaultResponder cmdadapter.Responder = responder{}
 
 // --- Interaction responses ---
 
+// errCodeAlreadyAcknowledged is Discord's API error code for "interaction already acknowledged".
+const errCodeAlreadyAcknowledged = 40060
+
 // isAlreadyAcknowledged reports whether an interaction was already ACK'd/responded to.
 // In that case, we must use InteractionResponseEdit or followups instead of InteractionRespond.
+// Discord reports it as API error code 40060 ("Interaction has already been acknowledged").
 func isAlreadyAcknowledged(err error) bool {
 	if err == nil {
 		return false
 	}
-	// discordgo often wraps API errors as *discordgo.RESTError; string matching is
-	// the most robust across forked versions and proxying layers.
-	msg := err.Error()
-	return strings.Contains(msg, "already been acknowledged") ||
-		strings.Contains(msg, "Interaction has already been acknowledged")
+	var restErr *discordgo.RESTError
+	if !errors.As(err, &restErr) || restErr.Message == nil {
+		return false
+	}
+	return restErr.Message.Code == errCodeAlreadyAcknowledged
 }
 
 // AckDeferred sends a fast public ACK for slash interactions and ignores duplicate ACK errors.
@@ -206,19 +210,5 @@ func FollowupEmbedEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate
 	_, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Embeds: []*discordgo.MessageEmbed{embed},
 	})
-	return err
-}
-
-// --- Channel messages (non-interaction) ---
-
-// Message sends a plain text message to a channel.
-func Message(s *discordgo.Session, channelID, content string) error {
-	_, err := s.ChannelMessageSend(channelID, content)
-	return err
-}
-
-// MessageEmbed sends an embed to a channel.
-func MessageEmbed(s *discordgo.Session, channelID string, embed *discordgo.MessageEmbed) error {
-	_, err := s.ChannelMessageSendEmbed(channelID, embed)
 	return err
 }

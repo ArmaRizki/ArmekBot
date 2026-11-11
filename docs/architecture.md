@@ -3,7 +3,7 @@
 > House rules (naming, concurrency contracts, how to add sources/parsers) live
 > in [conventions.md](conventions.md); this document covers how the system works.
 
-Melodix is a Discord music bot built around a reusable, Discord-agnostic playback engine.
+ArmekBot is a Discord music bot built around a reusable, Discord-agnostic playback engine.
 The repository ships two binaries on top of the same engine:
 
 - **`cmd/discord`** — the Discord bot (slash commands, voice, persistence, health watchdogs).
@@ -51,7 +51,7 @@ flowchart TB
 | `internal/discord` | The `Bot`: session lifecycle, handlers, health watchdogs, voice service |
 | `internal/discord/voice` | Per-guild players and sink providers; guild status messages; **survives session restarts** |
 | `internal/discord/voice/sink` | `DiscordSink`: forwards Opus packets to the voice connection (no encode) |
-| `internal/discord/cmdadapter` | Bridges melodix command types to the `keshon/command` registry/middleware framework |
+| `internal/discord/cmdadapter` | Bridges armekbot command types to the `keshon/command` registry/middleware framework |
 | `internal/discord/cmdsync` | Per-guild slash-command diff sync (create/edit/delete) |
 | `internal/discord/reply` | Embed/response helpers shared by handlers and the voice service |
 | `internal/discord/execguard` | Global command parallelism cap + per-command timeout |
@@ -152,7 +152,7 @@ likewise transcode through ffmpeg.
 
 A track's `Now Playing` chip shows `passthrough` or `ffmpeg` (or `cached`) so the active mode
 is visible at a glance. The passthrough packages have opt-in live tests
-(`MELODIX_LIVE_TESTS=1 go test -run Live -v ./...`) that act as canaries for endpoint drift.
+(`ARMEKBOT_LIVE_TESTS=1 go test -run Live -v ./...`) that act as canaries for endpoint drift.
 
 ### Track cache & anti-skip buffer (optional, opt-in)
 
@@ -280,7 +280,7 @@ stderr is captured and classified (403/forbidden/conversion failures at Warn).
 
 ## Discord command layer
 
-Commands implement the melodix `Handler` interface and are registered through
+Commands implement the armekbot `Handler` interface and are registered through
 `cmdadapter.Register` into `keshon/command`'s `DefaultRegistry`, wrapped in middleware
 (guild-only, per-guild disabled-command gate, permission check, invocation logging).
 Optional capabilities are discovered by interface assertion: `SlashProvider`,

@@ -3,10 +3,10 @@ package discord
 import (
 	"context"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
 )
 
 // onInteractionCreate dispatches slash commands, context menu commands, and component interactions.
@@ -33,6 +33,13 @@ func (b *Bot) onApplicationCommand(s *discordgo.Session, i *discordgo.Interactio
 	logger := b.cmdLogger
 	b.mu.RUnlock()
 
+	// Keep the interface nil when no syncer exists: a typed nil pointer would
+	// panic on use instead of failing as "not configured".
+	var syncer cmdadapter.CommandSyncer
+	if sy := b.syncer(); sy != nil {
+		syncer = sy
+	}
+
 	var inv *command.Invocation
 	switch i.ApplicationCommandData().CommandType {
 	case discordgo.MessageApplicationCommand:
@@ -46,7 +53,7 @@ func (b *Bot) onApplicationCommand(s *discordgo.Session, i *discordgo.Interactio
 			Session: s, Event: i, Storage: b.storage,
 			Config: b.cfg, Responder: reply.DefaultResponder, Logger: logger,
 			AppLog: b.log,
-			Syncer: b.cmdSyncer,
+			Syncer: syncer,
 		}}
 	default:
 		return

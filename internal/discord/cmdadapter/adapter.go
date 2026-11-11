@@ -18,6 +18,13 @@ func (a *Adapter) Category() string         { return a.Cmd.Category() }
 func (a *Adapter) UserPermissions() []int64 { return a.Cmd.UserPermissions() }
 
 func (a *Adapter) Run(ctx context.Context, inv *command.Invocation) error {
+	// The command body does not take a context, so the guard's deadline can only be
+	// honored here: refuse to start once the slot's context is already done.
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
 	return a.Cmd.Run(inv.Data)
 }
 

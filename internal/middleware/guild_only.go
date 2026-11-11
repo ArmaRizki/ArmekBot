@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 )
 
 // WithGuildOnly wraps a command to enforce guild-only access

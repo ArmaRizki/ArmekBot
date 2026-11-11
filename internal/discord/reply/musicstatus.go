@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sources"
 )
 
 // Music status embeds shared by the slash handlers (synchronous updates) and the

@@ -242,9 +242,11 @@ func (s *Session) onInterface(i interface{}) {
 // onReady handles the ready event.
 func (s *Session) onReady(r *Ready) {
 
+	s.Lock()
 	// Store the SessionID within the Session struct.
 	s.sessionID = r.SessionID
 
 	// Store the ResumeGatewayURL within the Session struct.
 	s.resumeGatewayURL = r.ResumeGatewayURL
+	s.Unlock()
 }

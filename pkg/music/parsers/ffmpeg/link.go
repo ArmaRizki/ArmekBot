@@ -1,7 +1,7 @@
 package ffmpeg
 
 import (
-	"github.com/keshon/melodix/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 )
 
 func ffmpegLink(url string) (opus.Reader, func(), error) {

@@ -12,5 +12,5 @@ datastore_dump.json
 *.exe~
 dump.bat
 /.cursor
-melodix-discord
+armekbot-discord
 /data/cache/

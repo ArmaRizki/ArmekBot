@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdlogger"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdsync"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/execguard"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/watchdog"
 	"github.com/bwmarrin/discordgo"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdlogger"
-	"github.com/keshon/melodix/internal/discord/cmdsync"
-	"github.com/keshon/melodix/internal/discord/execguard"
-	"github.com/keshon/melodix/internal/discord/watchdog"
 )
 
 // RunSession opens one Discord session and blocks until ctx is cancelled or the API probe

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/keshon/melodix/pkg/music/cache"
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/cache"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
 	"github.com/rs/zerolog"
 )
 
@@ -210,15 +210,26 @@ func (rs *RecoveryStream) ReadPacket() ([]byte, error) {
 			continue
 		}
 
-		// Terminal: a clean EOF means the track ended → commit the cache; any
-		// other error means we gave up → discard the partial.
-		if errors.Is(err, io.EOF) {
+		// Terminal: a clean EOF at (nearly) the track's end means the track
+		// finished → commit the cache; anything else (an EOF where we gave up
+		// recovering, or an error) discards the partial blob.
+		if errors.Is(err, io.EOF) && rs.playedToEnd() {
 			rs.commitCache()
 		} else {
 			rs.abortCache()
 		}
 		return nil, err
 	}
+}
+
+// playedToEnd reports whether the stream reached (nearly) the track's known
+// end. A track that died mid-way (recovery gave up) must not be cached: the
+// truncated blob would later be served as if it were the whole track.
+func (rs *RecoveryStream) playedToEnd() bool {
+	if rs.track.Duration <= 0 {
+		return true // unknown duration: EOF is the only end signal we have
+	}
+	return rs.seekSec >= 0.95*rs.track.Duration.Seconds()
 }
 
 // Read exposes the recovered packet stream as decoded PCM (s16le, 48kHz stereo).

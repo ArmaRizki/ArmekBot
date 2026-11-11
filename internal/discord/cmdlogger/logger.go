@@ -3,8 +3,8 @@ package cmdlogger
 import (
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/rs/zerolog"
 )
 
@@ -41,7 +41,7 @@ func (l *Logger) resolveChannelName(channelID string) string {
 	if err != nil {
 		ch, err = l.session.Channel(channelID)
 		if err != nil {
-			l.log.Warn().Str("channel_id", channelID).Err(err).Msg("failed to resolve channel name")
+			l.log.Warn().Str("channel_id", channelID).Err(err).Msg("channel_name_resolve_failed")
 			return ""
 		}
 	}
@@ -53,7 +53,7 @@ func (l *Logger) resolveGuildName(guildID string) string {
 	if err != nil {
 		g, err = l.session.Guild(guildID)
 		if err != nil {
-			l.log.Warn().Str("guild_id", guildID).Err(err).Msg("failed to resolve guild name")
+			l.log.Warn().Str("guild_id", guildID).Err(err).Msg("guild_name_resolve_failed")
 			return ""
 		}
 	}

@@ -30,12 +30,14 @@ func attachDiscordgoLogger(log zerolog.Logger) {
 			ev = log.Info()
 		}
 
-		// Ensure "at" points to the discordgo callsite (not this bridge).
-		if pc, file, line, ok := runtime.Caller(caller); ok {
-			_ = pc
-			ev.Str("at", file+":"+strconv.Itoa(line))
+		// "src" (never "at"): the root logger's Caller() hook owns "at" and writes
+		// it at Msg() time, so reusing the name produced a duplicate key.
+		// caller+1: discordgo resolves the caller depth inside its msglog, so from
+		// inside this closure the real callsite is one frame further up.
+		if _, file, line, ok := runtime.Caller(caller + 1); ok {
+			ev.Str("src", file+":"+strconv.Itoa(line))
 		}
 
-		ev.Str("raw", raw).Msg(raw)
+		ev.Msg(raw)
 	}
 }

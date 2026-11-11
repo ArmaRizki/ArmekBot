@@ -3,12 +3,11 @@ package maintenance
 import (
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
 )
 
-func runStatus(s *discordgo.Session, e *discordgo.InteractionCreate, storage storage.Storage) error {
+func runStatus(s *discordgo.Session, e *discordgo.InteractionCreate) error {
 	guild, err := s.State.Guild(e.GuildID)
 	if err != nil || guild == nil {
 		guild, err = s.Guild(e.GuildID)

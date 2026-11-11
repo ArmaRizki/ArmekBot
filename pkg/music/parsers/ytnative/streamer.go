@@ -8,8 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
 	"github.com/rs/zerolog"
 )
 

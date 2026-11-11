@@ -3,7 +3,6 @@ package sources
 
 // Source name identifiers, used for source selection and persisted in playback history.
 const (
-	Auto       = "auto"
 	YouTube    = "youtube"
 	Radio      = "radio"
 	SoundCloud = "soundcloud"

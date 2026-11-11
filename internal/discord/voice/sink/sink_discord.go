@@ -5,9 +5,9 @@ import (
 	"io"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/stream"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/stream"
 	"github.com/rs/zerolog"
 )
 

@@ -3,16 +3,16 @@ package commands
 import (
 	"strings"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
 )
 
 // RunCmdLog shows recent command usage for the guild.
-func RunCmdLog(s *discordgo.Session, e *discordgo.InteractionCreate, storage storage.Storage) error {
+func RunCmdLog(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage) error {
 	guildID := e.GuildID
 
-	records, err := storage.CommandHistory(guildID)
+	records, err := stor.CommandHistory(guildID)
 	if err != nil {
 		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
 			Description: "Failed to fetch command logs: " + err.Error(),

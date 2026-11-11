@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/keshon/melodix/pkg/music/cache"
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/parsers/ffmpeg"
-	"github.com/keshon/melodix/pkg/music/parsers/kkdai"
-	"github.com/keshon/melodix/pkg/music/parsers/scnative"
-	"github.com/keshon/melodix/pkg/music/parsers/ytdlp"
-	"github.com/keshon/melodix/pkg/music/parsers/ytnative"
-	"github.com/keshon/melodix/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/cache"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ffmpeg"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/kkdai"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/scnative"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ytdlp"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ytnative"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 )
 
 // registryEntries maps parser keys (the sources.Parser* constants; the strings

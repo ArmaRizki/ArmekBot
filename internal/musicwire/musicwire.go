@@ -4,10 +4,10 @@
 package musicwire
 
 import (
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/storage"
-	"github.com/keshon/melodix/pkg/music/cache"
-	"github.com/keshon/melodix/pkg/music/stream"
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/cache"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/stream"
 	"github.com/rs/zerolog"
 )
 

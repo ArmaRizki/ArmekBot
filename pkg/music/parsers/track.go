@@ -5,7 +5,7 @@ package parsers
 import (
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 )
 
 // Track is the playback entity that flows through the queue, parsers, and sinks.

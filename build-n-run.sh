@@ -9,12 +9,12 @@ TARGET="${1:-discord}"
 case "${TARGET,,}" in
   discord)
     MAIN_PKG="${SCRIPT_DIR}/cmd/discord"
-    OUTPUT="${SCRIPT_DIR}/melodix-discord"
+    OUTPUT="${SCRIPT_DIR}/armekbot-discord"
     DESC="Discord music bot that allows you to play music from YouTube, SoundCloud and internet radio streams."
     ;;
   cli)
     MAIN_PKG="${SCRIPT_DIR}/cmd/cli"
-    OUTPUT="${SCRIPT_DIR}/melodix-cli"
+    OUTPUT="${SCRIPT_DIR}/armekbot-cli"
     DESC="CLI music player - same playback engine as the Discord bot."
     ;;
   *)
@@ -43,7 +43,7 @@ DESC_ESCAPED="${DESC//\'/\'\\\'\'}"
 LD_FLAGS="-X github.com/keshon/buildinfo.Version=dev"
 LD_FLAGS+=" -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT}"
 LD_FLAGS+=" -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE}"
-LD_FLAGS+=" -X github.com/keshon/buildinfo.Project=Melodix"
+LD_FLAGS+=" -X github.com/keshon/buildinfo.Project=ArmekBot"
 LD_FLAGS+=" -X 'github.com/keshon/buildinfo.Description=${DESC_ESCAPED}'"
 
 echo "[2/3] Building ${OUTPUT}..."

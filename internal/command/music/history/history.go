@@ -6,10 +6,10 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/keshon/melodix/internal/command/music/common"
-	"github.com/keshon/melodix/internal/discord"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/command/music/common"
+	"github.com/ArmaRizki/ArmekBot/internal/discord"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 )
 
 type History struct {

@@ -3,19 +3,21 @@ package join
 import (
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/perm"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/perm"
-	"github.com/keshon/melodix/internal/discord/reply"
 )
 
 type Join struct {
 	Bot discord.VoiceAPI
 }
 
-func (c *Join) Name() string             { return "join" }
-func (c *Join) Description() string      { return "Make the bot join your voice channel and stay (24/7 mode)" }
+func (c *Join) Name() string { return "join" }
+func (c *Join) Description() string {
+	return "Make the bot join your voice channel and stay (24/7 mode)"
+}
 func (c *Join) Group() string            { return "music" }
 func (c *Join) Category() string         { return "🎵 Music" }
 func (c *Join) UserPermissions() []int64 { return []int64{} }

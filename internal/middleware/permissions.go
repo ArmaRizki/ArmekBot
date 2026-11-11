@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -66,6 +66,17 @@ var PermissionNames = map[int64]string{
 func WithUserPermissionCheck() command.Middleware {
 	return func(c command.Command) command.Command {
 		return command.Wrap(c, func(ctx context.Context, inv *command.Invocation) error {
+			// The required permissions decide whether a check is needed at all:
+			// commands without requirements must not pay for the lookup.
+			meta, ok := command.Root(c).(cmdadapter.Meta)
+			if !ok {
+				return c.Run(ctx, inv)
+			}
+			required := meta.UserPermissions()
+			if len(required) == 0 {
+				return c.Run(ctx, inv)
+			}
+
 			var s *discordgo.Session
 			var m *discordgo.Member
 			var guildID, channelID string
@@ -80,14 +91,14 @@ func WithUserPermissionCheck() command.Middleware {
 			case *cmdadapter.MessageContext:
 				s, m, guildID, channelID = v.Session, v.Event.Member, v.Event.GuildID, v.Event.ChannelID
 			default:
-				return c.Run(ctx, inv)
+				// Unknown interaction kind: the member cannot be resolved, so the
+				// requirement cannot be enforced.
+				return nil
 			}
 
-			if guildID == "" || m == nil {
-				return c.Run(ctx, inv)
-			}
-			if m.User == nil {
-				return c.Run(ctx, inv)
+			if guildID == "" || m == nil || m.User == nil {
+				respondPermissionDenied(s, inv, channelID, "Couldn't verify your permissions for this command.")
+				return nil
 			}
 
 			memberPerms, err := s.UserChannelPermissions(m.User.ID, channelID)
@@ -95,15 +106,6 @@ func WithUserPermissionCheck() command.Middleware {
 				return fmt.Errorf("failed to get user permissions: %w", err)
 			}
 			if memberPerms&discordgo.PermissionAdministrator != 0 {
-				return c.Run(ctx, inv)
-			}
-
-			meta, ok := command.Root(c).(cmdadapter.Meta)
-			if !ok {
-				return c.Run(ctx, inv)
-			}
-			required := meta.UserPermissions()
-			if len(required) == 0 {
 				return c.Run(ctx, inv)
 			}
 
@@ -127,25 +129,30 @@ func WithUserPermissionCheck() command.Middleware {
 					"You need at least one of the following permissions to run this command:\n`%s`",
 					strings.Join(allowed, "`, `"),
 				)
-				switch v := inv.Data.(type) {
-				case *cmdadapter.SlashInteractionContext:
-					if v.Responder != nil {
-						_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
-					}
-				case *cmdadapter.ComponentInteractionContext:
-					if v.Responder != nil {
-						_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
-					}
-				case *cmdadapter.MessageApplicationCommandContext:
-					if v.Responder != nil {
-						_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
-					}
-				case *cmdadapter.MessageContext:
-					_, _ = s.ChannelMessageSend(channelID, msg)
-				}
+				respondPermissionDenied(s, inv, channelID, msg)
 				return nil
 			}
 			return c.Run(ctx, inv)
 		})
+	}
+}
+
+// respondPermissionDenied tells the user the command was refused.
+func respondPermissionDenied(s *discordgo.Session, inv *command.Invocation, channelID, msg string) {
+	switch v := inv.Data.(type) {
+	case *cmdadapter.SlashInteractionContext:
+		if v.Responder != nil {
+			_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
+		}
+	case *cmdadapter.ComponentInteractionContext:
+		if v.Responder != nil {
+			_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
+		}
+	case *cmdadapter.MessageApplicationCommandContext:
+		if v.Responder != nil {
+			_ = v.Responder.RespondEmbedEphemeral(s, v.Event, &discordgo.MessageEmbed{Description: msg})
+		}
+	case *cmdadapter.MessageContext:
+		_, _ = s.ChannelMessageSend(channelID, msg)
 	}
 }

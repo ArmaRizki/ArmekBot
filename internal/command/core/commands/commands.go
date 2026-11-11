@@ -3,8 +3,8 @@ package commands
 import (
 	"sort"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -15,7 +15,9 @@ const (
 	codeRightBlockWrapper   = "```"
 )
 
-var maxContentLength = discordMaxMessageLength - len(codeLeftBlockWrapper) - len(codeRightBlockWrapper)
+// The fenced block costs the opening fence, the newline before the body and
+// the closing fence; the body must fit in what is left of the limit.
+var maxContentLength = discordMaxMessageLength - len(codeLeftBlockWrapper) - len("\n") - len(codeRightBlockWrapper)
 
 // CommandsSubcommandOptions returns slash options for command management.
 func CommandsSubcommandOptions() []*discordgo.ApplicationCommandOption {
@@ -91,9 +93,4 @@ func GetUniqueGroups() []string {
 	}
 	sort.Strings(result)
 	return result
-}
-
-// getUniqueGroups is kept for internal callers within the package.
-func getUniqueGroups() []string {
-	return GetUniqueGroups()
 }

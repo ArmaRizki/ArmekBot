@@ -1,9 +1,9 @@
 package cmdadapter
 
 import (
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/storage"
 	"github.com/rs/zerolog"
 )
 

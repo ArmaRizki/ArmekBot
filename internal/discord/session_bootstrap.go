@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/voice"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ffmpeg"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/kkdai"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ytnative"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/soundcloudapi"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/discord/voice"
-	"github.com/keshon/melodix/internal/storage"
-	"github.com/keshon/melodix/pkg/music/parsers/ffmpeg"
-	"github.com/keshon/melodix/pkg/music/parsers/kkdai"
-	"github.com/keshon/melodix/pkg/music/parsers/ytnative"
-	"github.com/keshon/melodix/pkg/music/soundcloudapi"
 	"github.com/rs/zerolog"
 )
 
@@ -25,10 +25,7 @@ func NewBot(cfg *config.Config, storage *storage.Storage, log zerolog.Logger) *B
 	}
 	// Voice service must outlive a single Discord session so playback/queues survive reconnects.
 	b.voice = voice.NewVoiceService(func() *discordgo.Session {
-		b.mu.RLock()
-		s := b.dg
-		b.mu.RUnlock()
-		return s
+		return b.session()
 	}, cfg, storage, log)
 	b.sessionCtx.Store(&sessionCtxHolder{ctx: context.Background()})
 	b.cmdGuard.Store(&cmdGuardHolder{g: disabledGuard})
@@ -47,8 +44,8 @@ func (b *Bot) stopAllPlayers() {
 	b.log.Info().Msg("players_all_stopped")
 }
 
-func (b *Bot) configureIntents() {
-	b.dg.Identify.Intents = discordgo.IntentsAll
+func (b *Bot) configureIntents(dg *discordgo.Session) {
+	dg.Identify.Intents = discordgo.IntentsAll
 }
 
 // IsSessionUnhealthyError reports whether an error means we should fast-restart the session.

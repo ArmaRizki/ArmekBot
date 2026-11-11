@@ -1,6 +1,6 @@
 package parsers
 
-import "github.com/keshon/melodix/pkg/music/opus"
+import "github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 
 // Streamer opens a track as a stream of 20ms Opus packets (opus.Reader). How it
 // produces them is internal: passthrough sources demux a native Opus container,

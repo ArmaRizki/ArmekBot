@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keshon/melodix/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 )
 
 func TestAggregatePlaybackCounts(t *testing.T) {

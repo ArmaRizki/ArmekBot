@@ -4,15 +4,15 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/command/music/common"
+	"github.com/ArmaRizki/ArmekBot/internal/discord"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/perm"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/player"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/command/music/common"
-	"github.com/keshon/melodix/internal/discord"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/perm"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
-	"github.com/keshon/melodix/pkg/music/player"
-	"github.com/keshon/melodix/pkg/music/sources"
 )
 
 type Play struct {
@@ -254,6 +254,13 @@ func (c *Play) Run(ctx interface{}) error {
 			embed = reply.NowPlayingEmbed(track)
 		}
 	}
+
+	// In 24/7-by-default mode the guild's voice channel is remembered, so the bot
+	// rejoins it after a session restart like an explicit /join would.
+	if slashCtx.Config != nil && slashCtx.Config.DefaultStayConnected {
+		c.Bot.SetStayConnected(guildID, voiceState.ChannelID, true)
+	}
+
 	if err := c.Bot.UpdatePlaybackStatus(s, e, guildID, embed); err != nil {
 		slashCtx.AppLog.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
 	}

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
 )
 
 type commandRunOptions struct {

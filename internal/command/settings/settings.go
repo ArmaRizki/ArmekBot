@@ -5,11 +5,11 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/keshon/melodix/internal/command/core/commands"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/command/core/commands"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 
-	"github.com/keshon/melodix/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 )
 
 type SettingsCommand struct{}
@@ -46,6 +46,11 @@ func (c *SettingsCommand) Run(ctx interface{}) error {
 	s := context.Session
 	e := context.Event
 	st := context.Storage
+	if st == nil {
+		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
+			Description: "Storage is not available.",
+		})
+	}
 
 	data := e.ApplicationCommandData()
 	if len(data.Options) == 0 {
@@ -65,7 +70,7 @@ func (c *SettingsCommand) Run(ctx interface{}) error {
 
 	switch group.Name {
 	case "commands":
-		return runCommandsSettings(s, e, *st, context.Syncer, sub)
+		return runCommandsSettings(s, e, st, context.Syncer, sub)
 	default:
 		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
 			Description: fmt.Sprintf("Unknown settings group: %s", group.Name),
@@ -73,7 +78,7 @@ func (c *SettingsCommand) Run(ctx interface{}) error {
 	}
 }
 
-func runCommandsSettings(s *discordgo.Session, e *discordgo.InteractionCreate, st storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
+func runCommandsSettings(s *discordgo.Session, e *discordgo.InteractionCreate, st *storage.Storage, syncer cmdadapter.CommandSyncer, sub *discordgo.ApplicationCommandInteractionDataOption) error {
 	switch sub.Name {
 	case "log":
 		return commands.RunCmdLog(s, e, st)

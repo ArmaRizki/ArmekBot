@@ -1,8 +1,8 @@
 package ytdlp
 
 import (
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
 )
 
 // YtdlpPath is the yt-dlp binary invoked by this parser; override for non-PATH installs.

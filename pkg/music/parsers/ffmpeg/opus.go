@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/keshon/melodix/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 )
 
 // OpusReader starts cmd (ffmpeg emitting PCM s16le on stdout), wraps it as a

@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sink"
-	"github.com/keshon/melodix/pkg/music/sources"
-	"github.com/keshon/melodix/pkg/music/stream"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sink"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/stream"
 )
 
 // fakeStreamer implements parsers.Streamer for tests: swap stream.Registry with
@@ -100,6 +100,34 @@ func (s *fakeSink) Stream(r opus.Reader, stop <-chan struct{}) error {
 			return stream.ErrPlaybackStopped
 		default:
 		}
+	}
+}
+
+// gatedSink ignores the stop channel until released, so a test controls
+// exactly when the playback goroutine ends.
+type gatedSink struct {
+	release chan struct{}
+}
+
+func (s *gatedSink) Stream(r opus.Reader, stop <-chan struct{}) error {
+	<-s.release
+	return stream.ErrPlaybackStopped
+}
+
+// waitClosed waits until ch is closed.
+func waitClosed(t *testing.T, ch chan struct{}) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		select {
+		case <-ch:
+			return
+		default:
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("timed out waiting for the channel to close")
+		}
+		time.Sleep(time.Millisecond)
 	}
 }
 
@@ -242,6 +270,91 @@ func TestStopUnblocksBlockedSink(t *testing.T) {
 	}
 	if p.IsPlaying() {
 		t.Fatal("player should not be playing after Stop")
+	}
+}
+
+// A newer run that takes over while Stop waits owns its channels: Stop must
+// not recycle them, or the next /stop closes the wrong channel and the
+// playing track never stops.
+func TestStopKeepsChannelsOfNewerRun(t *testing.T) {
+	swapRegistry(t, map[string]parsers.Streamer{"ok": okStreamer(nil)})
+	gated := &gatedSink{release: make(chan struct{})}
+	provider := newFakeProvider(gated)
+	p := New(provider, fakeResolver{})
+
+	if err := p.EnqueueTrackInfo(testTrack("one", "ok")); err != nil {
+		t.Fatalf("enqueue: %v", err)
+	}
+	if err := p.PlayNext(""); err != nil {
+		t.Fatalf("PlayNext: %v", err)
+	}
+
+	p.mu.Lock()
+	oldStop, _ := p.stopPlayback, p.playbackDone
+	p.mu.Unlock()
+
+	stopped := make(chan struct{})
+	go func() {
+		_ = p.Stop(false)
+		close(stopped)
+	}()
+
+	waitClosed(t, oldStop) // Stop asked the run to stop; the sink still holds it
+
+	// A newer run takes over (the track ended naturally and auto-advanced).
+	newStop := make(chan struct{})
+	newDone := make(chan struct{})
+	p.mu.Lock()
+	p.stopPlayback = newStop
+	p.playbackDone = newDone
+	p.stopOnce = sync.Once{}
+	p.mu.Unlock()
+
+	close(gated.release) // the run ends -> its done channel closes -> Stop resumes
+
+	select {
+	case <-stopped:
+	case <-time.After(10 * time.Second):
+		t.Fatal("Stop did not return")
+	}
+
+	p.mu.Lock()
+	gotStop, gotDone := p.stopPlayback, p.playbackDone
+	p.mu.Unlock()
+	if gotStop != newStop || gotDone != newDone {
+		t.Fatal("Stop recycled the channels of the newer run")
+	}
+}
+
+// A track that fails to open must release its run's done channel, or a
+// concurrent Stop waits out the full timeout.
+func TestStopDuringFailedOpenDoesNotWaitForTimeout(t *testing.T) {
+	openStarted := make(chan struct{})
+	swapRegistry(t, map[string]parsers.Streamer{"slow": fakeStreamer{open: func(*parsers.Track, float64) (opus.Reader, func(), error) {
+		close(openStarted)
+		time.Sleep(200 * time.Millisecond)
+		return nil, nil, errors.New("open failed")
+	}}})
+	provider := newFakeProvider(&fakeSink{})
+	p := New(provider, fakeResolver{})
+
+	if err := p.EnqueueTrackInfo(testTrack("slow", "slow")); err != nil {
+		t.Fatalf("enqueue: %v", err)
+	}
+	go func() { _ = p.PlayNext("") }()
+
+	select {
+	case <-openStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("parser was never opened")
+	}
+
+	start := time.Now()
+	if err := p.Stop(false); err != nil {
+		t.Fatalf("Stop: %v", err)
+	}
+	if elapsed := time.Since(start); elapsed > 3*time.Second {
+		t.Fatalf("Stop took %v; it should not wait for the playback timeout", elapsed)
 	}
 }
 

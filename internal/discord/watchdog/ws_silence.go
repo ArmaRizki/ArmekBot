@@ -9,6 +9,9 @@ type WSSilenceMeta struct {
 	SinceLastWS      time.Duration
 	HeartbeatLatency time.Duration
 	Timeout          time.Duration
+	// LastWS is the time of the last gateway frame: it changes when the gateway
+	// recovers, so callers can tell a new silence episode from a continuing one.
+	LastWS time.Time
 }
 
 // WSSilence restarts a session when the gateway receive loop appears silent.
@@ -18,6 +21,10 @@ type WSSilenceMeta struct {
 // - ticks every tick interval
 // - does nothing until tracker reports ready
 // - triggers unhealthy when time since last WS exceeds timeout
+//
+// onUnhealthy reports whether the session is going away: when it returns true the
+// watcher stops, otherwise it keeps watching and re-arms on the next tick (the
+// session survived, e.g. a grace period or a voice-only restart).
 type WSSilence struct {
 	tracker     *Tracker
 	timeout     time.Duration
@@ -25,7 +32,7 @@ type WSSilence struct {
 	tick        time.Duration
 
 	heartbeatLatency func() time.Duration
-	onUnhealthy      func(meta WSSilenceMeta)
+	onUnhealthy      func(meta WSSilenceMeta) bool
 }
 
 type WSSilenceOptions struct {
@@ -33,7 +40,7 @@ type WSSilenceOptions struct {
 	Tick        time.Duration
 }
 
-func NewWSSilence(tracker *Tracker, timeout time.Duration, heartbeatLatency func() time.Duration, onUnhealthy func(meta WSSilenceMeta), opts WSSilenceOptions) *WSSilence {
+func NewWSSilence(tracker *Tracker, timeout time.Duration, heartbeatLatency func() time.Duration, onUnhealthy func(meta WSSilenceMeta) bool, opts WSSilenceOptions) *WSSilence {
 	if opts.SettleDelay <= 0 {
 		opts.SettleDelay = 15 * time.Second
 	}
@@ -73,18 +80,24 @@ func (w *WSSilence) Run(ctx context.Context) {
 				continue
 			}
 			since := w.tracker.SinceLastWS(now)
-			if since > w.timeout {
-				lat := time.Duration(0)
-				if w.heartbeatLatency != nil {
-					lat = w.heartbeatLatency()
-				}
-				w.onUnhealthy(WSSilenceMeta{
-					SinceLastWS:      since,
-					HeartbeatLatency: lat,
-					Timeout:          w.timeout,
-				})
+			if since <= w.timeout {
+				continue
+			}
+			lat := time.Duration(0)
+			if w.heartbeatLatency != nil {
+				lat = w.heartbeatLatency()
+			}
+			if w.onUnhealthy(WSSilenceMeta{
+				SinceLastWS:      since,
+				HeartbeatLatency: lat,
+				Timeout:          w.timeout,
+				LastWS:           w.tracker.LastWSTime(),
+			}) {
 				return
 			}
+			// The session survives (grace period, voice-only restart): keep watching
+			// and re-arm on the next tick. The silence duration only resets when the
+			// gateway delivers a frame again, so this fires once per tick at most.
 		}
 	}
 }

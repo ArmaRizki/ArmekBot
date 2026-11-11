@@ -6,13 +6,13 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdlogger"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdsync"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/execguard"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/voice"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/discord/cmdlogger"
-	"github.com/keshon/melodix/internal/discord/cmdsync"
-	"github.com/keshon/melodix/internal/discord/execguard"
-	"github.com/keshon/melodix/internal/discord/voice"
-	"github.com/keshon/melodix/internal/storage"
 	"github.com/rs/zerolog"
 )
 
@@ -76,4 +76,20 @@ func (b *Bot) releaseCommandSlot() {
 
 func (b *Bot) isGuildBlacklisted(guildID string) bool {
 	return slices.Contains(b.cfg.DiscordGuildBlacklist, guildID)
+}
+
+// session returns the current Discord session, or nil before the first session opens.
+// It reads b.dg under the lock: RunSession swaps it on every session restart.
+func (b *Bot) session() *discordgo.Session {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.dg
+}
+
+// syncer returns the current slash-command syncer, or nil before the first session opens.
+// It reads b.cmdSyncer under the lock: RunSession swaps it on every session restart.
+func (b *Bot) syncer() *cmdsync.Syncer {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.cmdSyncer
 }

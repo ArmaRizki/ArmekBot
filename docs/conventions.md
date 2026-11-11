@@ -82,7 +82,7 @@ ffmpeg via `ffmpeg.NewPCMCommand` wrapped in `ffmpeg.OpusReader`); add the key
 constant to `sources/parsers.go`; add the instance to `stream.registryEntries`;
 list it in the owning source's `AvailableParsers()` and the `/play` parser
 choices. If it talks to a live endpoint, add an opt-in live test
-(`MELODIX_LIVE_TESTS=1`) as a drift canary.
+(`ARMEKBOT_LIVE_TESTS=1`) as a drift canary.
 
 ## Testing & verification
 

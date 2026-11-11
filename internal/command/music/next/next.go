@@ -6,12 +6,12 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/keshon/melodix/internal/command/music/common"
-	"github.com/keshon/melodix/internal/discord"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/perm"
-	"github.com/keshon/melodix/internal/discord/reply"
-	musicplayer "github.com/keshon/melodix/pkg/music/player"
+	"github.com/ArmaRizki/ArmekBot/internal/command/music/common"
+	"github.com/ArmaRizki/ArmekBot/internal/discord"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/perm"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	musicplayer "github.com/ArmaRizki/ArmekBot/pkg/music/player"
 )
 
 type Next struct {

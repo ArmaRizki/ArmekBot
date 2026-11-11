@@ -12,6 +12,12 @@ func (b *Bot) onReady(s *discordgo.Session, r *discordgo.Ready) {
 		return
 	}
 
+	// Rejoin the 24/7 voice channels first: the per-guild command sync below
+	// makes blocking REST calls and must not delay the audio.
+	if b.voice != nil {
+		b.voice.RejoinStayConnectedTargets(s)
+	}
+
 	for _, g := range r.Guilds {
 		if b.isGuildBlacklisted(g.ID) {
 			b.log.Info().Str("guild_id", g.ID).Msg("guild_blacklisted_leaving")
@@ -21,14 +27,12 @@ func (b *Bot) onReady(s *discordgo.Session, r *discordgo.Ready) {
 			continue
 		}
 		if b.cfg.InitSlashCommands {
-			if err := b.cmdSyncer.SyncGuildCommands(g.ID); err != nil {
-				b.log.Error().Str("guild_id", g.ID).Err(err).Msg("commands_sync_failed")
+			if syncer := b.syncer(); syncer != nil {
+				if err := syncer.SyncGuildCommands(g.ID); err != nil {
+					b.log.Error().Str("guild_id", g.ID).Err(err).Msg("commands_sync_failed")
+				}
 			}
 		}
-	}
-
-	if b.voice != nil {
-		b.voice.RejoinStayConnectedTargets(s)
 	}
 
 	b.log.Info().Str("username", botInfo.Username).Msg("discord_ready")
@@ -45,8 +49,10 @@ func (b *Bot) onGuildCreate(s *discordgo.Session, g *discordgo.GuildCreate) {
 		return
 	}
 	if b.cfg.InitSlashCommands {
-		if err := b.cmdSyncer.SyncGuildCommands(g.ID); err != nil {
-			b.log.Error().Str("guild_id", g.ID).Err(err).Msg("commands_sync_failed")
+		if syncer := b.syncer(); syncer != nil {
+			if err := syncer.SyncGuildCommands(g.ID); err != nil {
+				b.log.Error().Str("guild_id", g.ID).Err(err).Msg("commands_sync_failed")
+			}
 		}
 	}
 }

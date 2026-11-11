@@ -4,10 +4,10 @@ package resolve
 import (
 	"errors"
 
-	"github.com/keshon/melodix/pkg/music/sources"
-	"github.com/keshon/melodix/pkg/music/sources/radio"
-	"github.com/keshon/melodix/pkg/music/sources/soundcloud"
-	"github.com/keshon/melodix/pkg/music/sources/youtube"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources/radio"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources/soundcloud"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources/youtube"
 )
 
 // Resolver routes input (URL or search query) to the matching Source.
@@ -44,7 +44,7 @@ func (r *Resolver) Resolve(input, selectedSource, selectedParser string) ([]sour
 			return nil, err
 		}
 
-		if !isURL(input) {
+		if !sources.IsURL(input) {
 			if selectedSource != sources.YouTube && selectedSource != sources.SoundCloud {
 				return nil, errors.New("title search is only supported on " + sources.YouTube + " and " + sources.SoundCloud)
 			}
@@ -57,7 +57,7 @@ func (r *Resolver) Resolve(input, selectedSource, selectedParser string) ([]sour
 	}
 
 	// Automatic detection
-	if !isURL(input) {
+	if !sources.IsURL(input) {
 		yt, ok := r.Sources[sources.YouTube]
 		if !ok {
 			return nil, errors.New(youtube.Name + " source not available for title search")

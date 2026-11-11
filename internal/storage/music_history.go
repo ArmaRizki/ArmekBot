@@ -6,9 +6,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/keshon/datastore"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sources"
 )
 
 // ErrMusicPlaybackNotFound is returned when no row matches the id (unknown, trimmed, or typo).

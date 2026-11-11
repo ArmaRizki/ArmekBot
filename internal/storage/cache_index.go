@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/keshon/melodix/pkg/music/cache"
+import "github.com/ArmaRizki/ArmekBot/pkg/music/cache"
 
 // CacheIndex returns a cache.IndexStore backed by the cache_entries collection,
 // for wiring into cache.New. Entries are written one at a time, so caching a

@@ -1,8 +1,11 @@
-package sink
+package speaker
 
-import "github.com/rs/zerolog"
+import (
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sink"
+	"github.com/rs/zerolog"
+)
 
-// SpeakerProvider is a Provider that always returns the same SpeakerSink (target ignored).
+// SpeakerProvider is a sink.Provider that always returns the same SpeakerSink (target ignored).
 type SpeakerProvider struct {
 	sink *SpeakerSink
 }
@@ -18,7 +21,7 @@ func NewSpeakerProviderWithLogger(log zerolog.Logger) *SpeakerProvider {
 }
 
 // Sink returns the shared speaker sink. target is ignored.
-func (p *SpeakerProvider) Sink(target string) (AudioSink, error) {
+func (p *SpeakerProvider) Sink(target string) (sink.AudioSink, error) {
 	return p.sink, nil
 }
 

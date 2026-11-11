@@ -6,16 +6,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/voice/sink"
+	"github.com/ArmaRizki/ArmekBot/internal/playbackerr"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/player"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/resolve"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/discord/voice/sink"
-	"github.com/keshon/melodix/internal/playbackerr"
-	"github.com/keshon/melodix/internal/storage"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/player"
-	"github.com/keshon/melodix/pkg/music/resolve"
-	"github.com/keshon/melodix/pkg/music/sources"
 	"github.com/rs/zerolog"
 )
 
@@ -32,7 +32,7 @@ type guildMusicStatus struct {
 
 // stayConnectedTarget remembers a guild's voice channel for 24/7 rejoin on reconnect.
 type stayConnectedTarget struct {
-	GuildID      string
+	GuildID        string
 	VoiceChannelID string
 }
 
@@ -58,6 +58,11 @@ type Service struct {
 	stayConnectedGuilds map[string]bool
 	// reconnectTargets tracks guilds+voice channels that should be rejoined on reconnect.
 	reconnectTargets map[string]stayConnectedTarget
+
+	// statusWatchers holds the stop channel of each player's status watcher, keyed by
+	// guild. Closing it ends the watcher goroutine (the player's status channel is
+	// never closed, so it is the only exit condition).
+	statusWatchers map[string]chan struct{}
 }
 
 // New creates a voice service for the given session getter and config.
@@ -73,6 +78,7 @@ func NewVoiceService(getSession SessionGetter, cfg *config.Config, store *storag
 		guildMusicNotifyChannel: make(map[string]string),
 		stayConnectedGuilds:     make(map[string]bool),
 		reconnectTargets:        make(map[string]stayConnectedTarget),
+		statusWatchers:          make(map[string]chan struct{}),
 	}
 }
 
@@ -177,11 +183,14 @@ func (s *Service) GetOrCreatePlayer(guildID string) *player.Player {
 		OnPlaybackFailed:      s.notifyPlaybackFailed,
 	})
 	p.SetGuildID(guildID)
+	p.SetStayConnected(s.cfg.DefaultStayConnected)
 	if s.store != nil {
 		p.SetRecorder(playbackRecorder{store: s.store, log: s.log})
 	}
 	s.players[guildID] = p
-	go s.watchPlayerStatus(guildID, p)
+	stop := make(chan struct{})
+	s.statusWatchers[guildID] = stop
+	go s.watchPlayerStatus(guildID, p, stop)
 	return p
 }
 
@@ -190,31 +199,49 @@ func (s *Service) GetOrCreatePlayer(guildID string) *player.Player {
 // updates synchronously; this watcher covers async transitions only: auto-advance to the
 // next track and natural queue end. On an interaction-driven start both paths render the
 // same "Now Playing" embed — the duplicate edit is invisible to users.
-func (s *Service) watchPlayerStatus(guildID string, p *player.Player) {
-	for status := range p.PlayerStatus {
-		sess := s.getSession()
-		if sess == nil {
-			continue
-		}
-		switch status {
-		case player.StatusPlaying:
-			track := p.CurrentTrack()
-			if track == nil {
+//
+// stop ends the watcher: the player's status channel is never closed, so without it
+// the goroutine (and the player it references) would live forever.
+func (s *Service) watchPlayerStatus(guildID string, p *player.Player, stop <-chan struct{}) {
+	for {
+		select {
+		case <-stop:
+			return
+		case status := <-p.PlayerStatus:
+			sess := s.getSession()
+			if sess == nil {
 				continue
 			}
-			if err := s.UpdatePlaybackStatus(sess, nil, guildID, reply.NowPlayingEmbed(track)); err != nil {
-				s.log.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
-			}
-		case player.StatusStopped:
-			// A transient Stopped fires between tracks; only render the final one.
-			if p.IsPlaying() || len(p.Queue()) > 0 {
-				continue
-			}
-			if err := s.UpdatePlaybackStatus(sess, nil, guildID, reply.PlaybackFinishedEmbed()); err != nil {
-				s.log.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
+			switch status {
+			case player.StatusPlaying:
+				track := p.CurrentTrack()
+				if track == nil {
+					continue
+				}
+				if err := s.UpdatePlaybackStatus(sess, nil, guildID, reply.NowPlayingEmbed(track)); err != nil {
+					s.log.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
+				}
+			case player.StatusStopped:
+				// A transient Stopped fires between tracks; only render the final one.
+				if p.IsPlaying() || len(p.Queue()) > 0 {
+					continue
+				}
+				if err := s.UpdatePlaybackStatus(sess, nil, guildID, reply.PlaybackFinishedEmbed()); err != nil {
+					s.log.Warn().Str("guild_id", guildID).Err(err).Msg("guild_status_update_failed")
+				}
 			}
 		}
 	}
+}
+
+// stopStatusWatcher ends the guild's status watcher. The caller must hold s.mu.
+func (s *Service) stopStatusWatcher(guildID string) {
+	stop, ok := s.statusWatchers[guildID]
+	if !ok {
+		return
+	}
+	delete(s.statusWatchers, guildID)
+	close(stop)
 }
 
 // ResolveTracks resolves input to tracks using the service's shared resolver.
@@ -259,6 +286,15 @@ func (s *Service) UpdatePlaybackStatus(session *discordgo.Session, i *discordgo.
 
 	if ok {
 		_, err := session.ChannelMessageEditEmbed(msg.ChannelID, msg.MessageID, embed)
+		if err != nil {
+			// The message may have been deleted: drop the cached entry so the next
+			// call re-creates the status message instead of editing a dead one forever.
+			s.guildMusicStatusMu.Lock()
+			if cur, still := s.guildMusicStatus[guildID]; still && cur == msg {
+				delete(s.guildMusicStatus, guildID)
+			}
+			s.guildMusicStatusMu.Unlock()
+		}
 		return err
 	}
 
@@ -289,12 +325,26 @@ func (s *Service) StopAllPlayers() {
 	for k, v := range s.players {
 		players[k] = v
 	}
+	providers := make([]*sink.DiscordSinkProvider, 0, len(s.sinkProviders))
+	for _, p := range s.sinkProviders {
+		providers = append(providers, p)
+	}
 	s.players = make(map[string]*player.Player)
 	s.sinkProviders = nil // reinitialized on next GetOrCreatePlayer if needed
+	for guildID := range s.statusWatchers {
+		s.stopStatusWatcher(guildID)
+	}
 	s.mu.Unlock()
 
 	for _, p := range players {
 		_ = p.Stop(true)
+	}
+	// A provider whose channel did not match the player's target was skipped by
+	// ReleaseSink: release it explicitly so no voice connection is orphaned.
+	for _, p := range providers {
+		if p != nil {
+			p.ReleaseSink("")
+		}
 	}
 }
 
@@ -386,13 +436,21 @@ func (s *Service) RejoinStayConnectedTargets(session *discordgo.Session) {
 	s.mu.RUnlock()
 
 	for _, t := range targets {
-		_, err := session.ChannelVoiceJoin(context.Background(), t.GuildID, t.VoiceChannelID, false, true)
-		if err != nil {
+		if err := s.rejoinStayConnectedTarget(session, t); err != nil {
 			s.log.Warn().Str("guild_id", t.GuildID).Str("channel_id", t.VoiceChannelID).Err(err).Msg("stay_connected_rejoin_failed")
 			continue
 		}
 		s.log.Info().Str("guild_id", t.GuildID).Str("channel_id", t.VoiceChannelID).Msg("stay_connected_rejoined")
 	}
+}
+
+// rejoinStayConnectedTarget rejoins one voice channel with a bounded deadline: the
+// join waits for the connection to become ready, which never happens without one.
+func (s *Service) rejoinStayConnectedTarget(session *discordgo.Session, t stayConnectedTarget) error {
+	ctx, cancel := context.WithTimeout(context.Background(), sink.VoiceJoinTimeout)
+	defer cancel()
+	_, err := session.ChannelVoiceJoin(ctx, t.GuildID, t.VoiceChannelID, false, true)
+	return err
 }
 
 // HandleGuildDelete cleans up stay-connected state when the bot leaves a guild.
@@ -403,5 +461,6 @@ func (s *Service) HandleGuildDelete(guildID string) {
 	delete(s.reconnectTargets, guildID)
 	delete(s.players, guildID)
 	delete(s.sinkProviders, guildID)
+	s.stopStatusWatcher(guildID)
 	s.log.Info().Str("guild_id", guildID).Msg("stay_connected_cleanup_guild_left")
 }

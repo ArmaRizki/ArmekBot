@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/parsers"
-	"github.com/keshon/melodix/pkg/music/sink"
-	"github.com/keshon/melodix/pkg/music/sources"
-	"github.com/keshon/melodix/pkg/music/stream"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sink"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/stream"
 	"github.com/rs/zerolog"
 )
 
@@ -46,8 +46,6 @@ const (
 	StatusPlaying Status = "Playing"
 	StatusAdded   Status = "Track(s) Added"
 	StatusStopped Status = "Playback Stopped"
-	StatusPaused  Status = "Playback Paused"
-	StatusResumed Status = "Playback Resumed"
 	StatusError   Status = "Error"
 	StatusIdle    Status = "Idle"
 )
@@ -93,6 +91,10 @@ type Player struct {
 	playNextMu sync.Mutex
 	// currTrack is the track being opened or actively playing (nil when idle).
 	currTrack *parsers.Track
+	// currMeta is what the parser discovered about currTrack (title, duration,
+	// parser, passthrough, cache). The stream works on its own copy of the
+	// track, so this is the only place that metadata is published.
+	currMeta trackMeta
 	// queue holds tracks waiting to play (FIFO).
 	queue []parsers.Track
 
@@ -124,9 +126,6 @@ type Player struct {
 	transportRecoveryMode TransportRecoveryMode
 	transportSoftAttempts int
 
-	// errMu protects lastPlaybackUserErr (Discord / UI; separate from mu to avoid deadlocks with emit paths).
-	errMu               sync.Mutex
-	lastPlaybackUserErr string
 	// onPlaybackFailed is set once at construction (Options.OnPlaybackFailed) and never mutated,
 	// so the playback goroutine may read it without a lock.
 	onPlaybackFailed func(guildID string, track parsers.Track, playbackErr error)
@@ -206,7 +205,7 @@ func (p *Player) Enqueue(input string, source string, parser string) error {
 	tracksInfo, err := p.resolver.Resolve(input, source, parser)
 	if err != nil {
 		p.log.Warn().Err(err).Msg("resolve_tracks_failed")
-		p.emitPlaybackError(err)
+		p.emitStatus(StatusError)
 		return err
 	}
 
@@ -227,7 +226,7 @@ func (p *Player) Enqueue(input string, source string, parser string) error {
 		})
 	}
 	if len(tracks) == 0 {
-		p.emitPlaybackError(ErrNoParsersForTrack)
+		p.emitStatus(StatusError)
 		return ErrNoParsersForTrack
 	}
 
@@ -242,7 +241,7 @@ func (p *Player) Enqueue(input string, source string, parser string) error {
 // EnqueueTrackInfo enqueues a single pre-resolved track (avoids double resolve when caller already has TrackInfo).
 func (p *Player) EnqueueTrackInfo(trackInfo sources.TrackInfo) error {
 	if len(trackInfo.AvailableParsers) == 0 {
-		p.emitPlaybackError(ErrNoParsersForTrack)
+		p.emitStatus(StatusError)
 		return ErrNoParsersForTrack
 	}
 	p.mu.Lock()
@@ -286,7 +285,7 @@ func (p *Player) PlayNext(target string) error {
 
 		p.log.Info().Str("title", track.Title).Str("url", track.URL).Msg("track_attempt_play")
 
-		err := p.startTrack(&track, false)
+		err := p.startTrack(&track)
 		p.playNextMu.Unlock()
 
 		if err != nil {
@@ -320,9 +319,8 @@ func (p *Player) PlayNext(target string) error {
 func (p *Player) Stop(disconnect bool) error {
 	p.log.Info().Bool("disconnect", disconnect).Msg("stop_called")
 
-	var doneCh chan struct{}
 	p.mu.Lock()
-	doneCh = p.playbackDone
+	doneCh := p.playbackDone
 	p.stopOnce.Do(func() {
 		close(p.stopPlayback)
 	})
@@ -338,6 +336,11 @@ func (p *Player) Stop(disconnect bool) error {
 		}
 	}
 
+	// playNextMu serializes dequeue + startTrack, so holding it keeps a new run
+	// from taking the sink between the state reset and ReleaseSink below.
+	p.playNextMu.Lock()
+	defer p.playNextMu.Unlock()
+
 	p.mu.Lock()
 	p.playing = false
 	p.starting = false
@@ -347,27 +350,26 @@ func (p *Player) Stop(disconnect bool) error {
 		p.log.Info().Msg("disconnect_and_clear_queue")
 		p.queue = nil
 		p.target = ""
-		p.sinkProvider.ReleaseSink(target)
 	}
 
-	p.stopPlayback = make(chan struct{})
-	p.playbackDone = make(chan struct{})
-	p.stopOnce = sync.Once{}
+	// Recycle the per-run channels only when the run we stopped is still the
+	// current one: a newer run (the track ended naturally while we waited and
+	// auto-advanced) owns them now, and its stop channel must survive.
+	if p.playbackDone == doneCh {
+		p.stopPlayback = make(chan struct{})
+		p.playbackDone = make(chan struct{})
+		p.stopOnce = sync.Once{}
+	}
 	p.emitStatus(StatusStopped)
 	p.mu.Unlock()
 
+	// ReleaseSink can block for seconds (voice disconnect): p.mu must not be held.
+	if disconnect {
+		p.sinkProvider.ReleaseSink(target)
+	}
+
 	p.log.Info().Msg("stop_finished")
 	return nil
-}
-
-// Pause is currently not supported (the sink owns the read loop).
-func (p *Player) Pause() error {
-	return ErrPauseNotSupported
-}
-
-// Resume is currently not supported.
-func (p *Player) Resume() error {
-	return ErrResumeNotSupported
 }
 
 // IsPlaying returns true while a track is opening or actively playing (excludes paused state where playing is false).
@@ -378,10 +380,28 @@ func (p *Player) IsPlaying() bool {
 }
 
 // CurrentTrack returns currently playing track (nil if none)
+// CurrentTrack returns a snapshot of the track that is playing (nil when idle).
+// The returned copy is safe to read: the stream works on its own copy of the
+// track, so nothing writes to it while the caller looks at it.
 func (p *Player) CurrentTrack() *parsers.Track {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.currTrack
+	if p.currTrack == nil {
+		return nil
+	}
+	out := cloneTrack(*p.currTrack)
+	if p.currMeta.Valid {
+		if p.currMeta.Title != "" {
+			out.Title = p.currMeta.Title
+		}
+		if p.currMeta.Duration > 0 {
+			out.Duration = p.currMeta.Duration
+		}
+		out.Passthrough = p.currMeta.Passthrough
+		out.Cached = p.currMeta.Cached
+		out.CurrentParser = p.currMeta.CurrentParser
+	}
+	return &out
 }
 
 // Queue returns a copy of current queue
@@ -406,8 +426,18 @@ func cloneTrack(tp parsers.Track) parsers.Track {
 	return out
 }
 
+// trackMeta is the parser-discovered part of a track's metadata.
+type trackMeta struct {
+	Title         string
+	Duration      time.Duration
+	Passthrough   bool
+	Cached        bool
+	CurrentParser string
+	Valid         bool
+}
+
 // startTrack launches playback goroutine
-func (p *Player) startTrack(track *parsers.Track, resumed bool) error {
+func (p *Player) startTrack(track *parsers.Track) error {
 	p.log.Info().
 		Str("title", track.Title).
 		Str("url", track.URL).
@@ -417,39 +447,50 @@ func (p *Player) startTrack(track *parsers.Track, resumed bool) error {
 
 	p.mu.Lock()
 	p.stopPlayback = make(chan struct{})
-	p.playbackDone = make(chan struct{})
+	doneCh := make(chan struct{})
+	p.playbackDone = doneCh
 	p.stopOnce = sync.Once{}
 	p.starting = true
 	p.playing = false
 	p.currTrack = track
 	p.mu.Unlock()
 
-	rs := stream.NewRecoveryStreamWithLogger(track, p.log)
+	// The stream and the parser behind it write title, duration and parser
+	// metadata on the playback goroutine: give them a private copy of the track
+	// and publish what they found through currMeta, so the UI never reads a
+	// track that is being written.
+	streamTrack := cloneTrack(*track)
+	rs := stream.NewRecoveryStreamWithLogger(&streamTrack, p.log)
 	if err := rs.Open(0); err != nil {
 		p.log.Error().Err(err).Msg("stream_open_failed")
 		p.mu.Lock()
 		p.starting = false
 		p.currTrack = nil
+		// The run never started: release whoever waits on it (Stop) instead of
+		// letting it wait out the full timeout.
+		if p.playbackDone == doneCh {
+			close(doneCh)
+		}
 		p.mu.Unlock()
 		return err
 	}
 
-	if resumed {
-		p.clearPlaybackUserError()
-		p.emitStatus(StatusResumed)
-		p.log.Info().Str("title", track.Title).Msg("track_resuming")
-	} else {
-		p.clearPlaybackUserError()
-		p.emitStatus(StatusPlaying)
-		p.log.Info().Str("title", track.Title).Msg("track_starting")
-	}
+	p.emitStatus(StatusPlaying)
+	p.log.Info().Str("title", track.Title).Msg("track_starting")
 
 	p.mu.Lock()
 	p.starting = false
 	p.playing = true
 	p.currTrack = track
+	p.currMeta = trackMeta{
+		Title:         streamTrack.Title,
+		Duration:      streamTrack.Duration,
+		Passthrough:   streamTrack.Passthrough,
+		Cached:        streamTrack.Cached,
+		CurrentParser: streamTrack.CurrentParser,
+		Valid:         true,
+	}
 	stopCh := p.stopPlayback
-	doneCh := p.playbackDone
 	p.mu.Unlock()
 
 	// Completion chain: runPlayback -> this goroutine -> PlayNext -> startTrack -> a fresh
@@ -588,21 +629,6 @@ func (p *Player) emitStatus(status Status) {
 	}
 }
 
-func (p *Player) clearPlaybackUserError() {
-	p.errMu.Lock()
-	p.lastPlaybackUserErr = ""
-	p.errMu.Unlock()
-}
-
-func (p *Player) emitPlaybackError(err error) {
-	if err != nil {
-		p.errMu.Lock()
-		p.lastPlaybackUserErr = err.Error()
-		p.errMu.Unlock()
-	}
-	p.emitStatus(StatusError)
-}
-
 // clearIfCurrent resets playing state only if track is still the current one, so a stale
 // run's goroutine cannot clobber the state of a newer run that already started.
 func (p *Player) clearIfCurrent(track *parsers.Track) {
@@ -610,6 +636,7 @@ func (p *Player) clearIfCurrent(track *parsers.Track) {
 	if p.currTrack == track {
 		p.playing = false
 		p.currTrack = nil
+		p.currMeta = trackMeta{}
 	}
 	p.mu.Unlock()
 }
@@ -620,25 +647,10 @@ func (p *Player) markPlaybackFailed(track *parsers.Track, failedSnapshot parsers
 	if playbackErr == nil {
 		return
 	}
-	p.emitPlaybackError(playbackErr)
+	p.emitStatus(StatusError)
 	if p.onPlaybackFailed != nil && guildID != "" {
 		p.onPlaybackFailed(guildID, failedSnapshot, playbackErr)
 	}
-}
-
-// LastPlaybackUserError returns the last error string attached to StatusError (may be empty).
-func (p *Player) LastPlaybackUserError() string {
-	p.errMu.Lock()
-	s := p.lastPlaybackUserErr
-	p.errMu.Unlock()
-	return s
-}
-
-// ChannelID returns the current target (voice channel ID for Discord, "" for CLI).
-func (p *Player) ChannelID() string {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.target
 }
 
 // SetStayConnected sets whether the player should stay in the voice channel

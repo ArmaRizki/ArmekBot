@@ -67,6 +67,11 @@ func (r *Validator) fetchContentType(rawURL string) (string, string, error) {
 
 	resp, err := r.Client.Do(req)
 	if err != nil || resp.StatusCode >= 400 {
+		if resp != nil {
+			// Close the first response before the GET fallback overwrites it,
+			// otherwise its body (and the connection) leaks.
+			_ = resp.Body.Close()
+		}
 		// Try GET as fallback
 		req.Method = http.MethodGet
 		resp, err = r.Client.Do(req)

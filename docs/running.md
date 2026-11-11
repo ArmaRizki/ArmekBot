@@ -1,5 +1,5 @@
 
-# Running Melodix
+# Running ArmekBot
 
 This guide covers both modes:
 - Discord bot
@@ -9,8 +9,15 @@ This guide covers both modes:
 
 ## Requirements
 
-- FFmpeg in PATH
-- yt-dlp (recommended)
+None beyond the bot itself. Two external binaries are **optional**:
+
+- **FFmpeg** — only the transcode parsers need it (SoundCloud, radio, and the
+  `kkdai-link`/`ytdlp-*` fallbacks). YouTube plays by Opus passthrough, so a
+  YouTube-first bot needs no FFmpeg at all.
+- **yt-dlp** — optional last-resort parser.
+
+Both default to `PATH` and can be pointed elsewhere via `ffmpeg.FFmpegPath` /
+`ytdlp.YtdlpPath`.
 
 ---
 
@@ -66,8 +73,15 @@ Optional variables:
 | `CACHE_MAX_BYTES`         | Global cache size cap; least-recently-used tracks are evicted past it.   | `2147483648` (2 GiB)    |
 | `CACHE_PERSISTENT`        | Keep the cache across restarts (`false` = transient, wiped on boot).     | `true`                  |
 | `BUFFER_AHEAD_MS`         | Anti-skip read-ahead depth (ms) masking short source stalls; `0` disables. | `10000`               |
+| `DEFAULT_STAY_CONNECTED`  | Keep the bot in the voice channel after the queue ends (24/7 mode). | `false`               |
 | `COMMAND_TIMEOUT`         | Hard timeout for a single command execution.               | `30s`                   |
 | `COMMAND_PARALLELISM`     | Max number of concurrently running command handlers.       | `16`                    |
+| `LOG_LEVEL`               | Log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, `panic`. | `info`         |
+| `LOG_FILE`                | Optional JSON log file with rotation; empty = stderr only (pretty console). | (none)      |
+| `LOG_MAX_SIZE_MB`         | Max size of the log file before it is rotated (MB).        | `10`                    |
+| `LOG_MAX_BACKUPS`         | Number of rotated log files to keep.                       | `3`                     |
+| `LOG_MAX_AGE_DAYS`        | Max age in days for rotated files (`0` = no age-based deletion). | `0`                |
+| `LOG_COMPRESS`            | Gzip the rotated log files.                                | `false`                 |
 
 
 ---
@@ -75,8 +89,8 @@ Optional variables:
 ### Step 4: Run
 
 ```bash
-go build -o melodix-discord ./cmd/discord
-./melodix-discord
+go build -o armekbot-discord ./cmd/discord
+./armekbot-discord
 ```
 
 ---
@@ -86,8 +100,8 @@ go build -o melodix-discord ./cmd/discord
 No Discord setup required.
 
 ```bash
-go build -o melodix-cli ./cmd/cli
-./melodix-cli
+go build -o armekbot-cli ./cmd/cli
+./armekbot-cli
 ```
 
 Commands:

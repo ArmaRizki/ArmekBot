@@ -2,7 +2,7 @@
 // Opus packet stream (e.g. forward to Discord voice, or decode to a speaker).
 package sink
 
-import "github.com/keshon/melodix/pkg/music/opus"
+import "github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 
 // AudioSink consumes a stream of 20ms Opus packets. The sink owns the read loop;
 // Stream returns when the stream ends (io.EOF) or stop is closed.

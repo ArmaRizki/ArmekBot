@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/keshon/melodix/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/config"
 	"github.com/rs/zerolog"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -14,7 +14,6 @@ import (
 // Setup builds a zerolog.Logger: pretty JSON lines to stderr via ConsoleWriter, and if cfg.LogFile
 // is set, the same JSON events to a rotated file. service is stored on every event (e.g. discord, cli).
 func Setup(service string, cfg *config.Config) zerolog.Logger {
-	_ = service
 	level, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		level = zerolog.InfoLevel
@@ -59,5 +58,6 @@ func Setup(service string, cfg *config.Config) zerolog.Logger {
 		With().
 		Timestamp().
 		Caller().
+		Str("service", service).
 		Logger()
 }

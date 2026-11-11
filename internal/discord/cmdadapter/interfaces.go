@@ -45,7 +45,7 @@ type Meta interface {
 	UserPermissions() []int64
 }
 
-// Handler is the interface every melodix command implements; Meta is embedded
+// Handler is the interface every armekbot command implements; Meta is embedded
 // so classification is defined in exactly one place.
 type Handler interface {
 	Meta

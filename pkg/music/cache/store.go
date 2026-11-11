@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 	"github.com/rs/zerolog"
 )
 

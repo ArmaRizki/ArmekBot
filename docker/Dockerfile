@@ -25,7 +25,7 @@ RUN BUILD_DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ") && \
             -X github.com/keshon/buildinfo.Version=dev \
             -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} \
             -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE} \
-            -X github.com/keshon/buildinfo.Project=Melodix \
+            -X github.com/keshon/buildinfo.Project=ArmekBot \
             -X 'github.com/keshon/buildinfo.Description=Discord music bot that allows you to play music from YouTube, SoundCloud and internet radio streams.'" \
         ./cmd/discord/
 

@@ -1,15 +1,20 @@
-# Melodix — Complete Repository Analysis
+# ArmekBot — Complete Repository Analysis
 
+> **Historical snapshot** at commit `264c050`. The storage and `internal/domain`
+> sections below are obsolete: persistence moved to an embedded WAL datastore
+> (`internal/storage`) and `internal/domain` was deleted. See
+> [architecture.md](architecture.md) for the current design.
+>
 > Generated from source at commit `264c050`  
-> **Repository root**: `c:/git/melodix`  
-> **Package**: `github.com/keshon/melodix`  
+> **Repository root**: `c:/git/armekbot`  
+> **Package**: `github.com/ArmaRizki/ArmekBot`  
 > **Language**: Go  
 
 ---
 
 ## 1. Overall Architecture
 
-Melodix is a **Discord music bot** written in Go. It is structured as a **hexagonal (ports-and-adapters) monolith** with four layers:
+ArmekBot is a **Discord music bot** written in Go. It is structured as a **hexagonal (ports-and-adapters) monolith** with four layers:
 
 ```
 cmd/            ── Entry points (Discord bot, CLI)
@@ -923,13 +928,13 @@ This section catalogs every meaningful source file by role, exports, and key des
 ### Build
 
 ```bash
-go build -o melodix ./cmd/discord
+go build -o armekbot ./cmd/discord
 ```
 
 ### Run (Discord)
 
 ```bash
-DISCORD_TOKEN="your_token" ./melodix
+DISCORD_TOKEN="your_token" ./armekbot
 ```
 
 ### Docker
@@ -949,5 +954,5 @@ docker compose -f docker/docker-compose.yml up
 
 ---
 
-*Generated from melodix repository at commit `264c050`.*
+*Generated from armekbot repository at commit `264c050`.*
 *Analysis covers config, storage, Discord bot lifecycle, voice subsystem, player, commands, middleware, and all supporting packages.*

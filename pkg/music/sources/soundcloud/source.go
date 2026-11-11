@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	source "github.com/keshon/melodix/pkg/music/sources"
+	source "github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 )
 
 // Name is this source's identifier (equals sources.SoundCloud).

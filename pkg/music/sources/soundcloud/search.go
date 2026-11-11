@@ -3,7 +3,7 @@ package soundcloud
 import (
 	"errors"
 
-	"github.com/keshon/melodix/pkg/music/soundcloudapi"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/soundcloudapi"
 )
 
 // ErrNoTrackMatch means the search returned no usable track.

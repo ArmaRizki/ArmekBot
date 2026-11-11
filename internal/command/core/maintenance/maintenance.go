@@ -3,8 +3,8 @@ package maintenance
 import (
 	"fmt"
 
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -51,7 +51,7 @@ func (c *Maintenance) Run(ctx interface{}) error {
 
 	s := context.Session
 	e := context.Event
-	storage := context.Storage
+	stor := context.Storage
 
 	options := e.ApplicationCommandData().Options
 
@@ -66,9 +66,14 @@ func (c *Maintenance) Run(ctx interface{}) error {
 	case "ping":
 		return runPing(s, e)
 	case "download-db":
-		return runDownloadDB(s, e, *storage)
+		if stor == nil {
+			return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
+				Description: "Storage is not available.",
+			})
+		}
+		return runDownloadDB(s, e, stor)
 	case "status":
-		return runStatus(s, e, *storage)
+		return runStatus(s, e)
 	default:
 		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
 			Description: fmt.Sprintf("Unknown subcommand: %s", sub.Name),

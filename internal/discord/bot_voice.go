@@ -3,9 +3,9 @@ package discord
 import (
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/player"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sources"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/pkg/music/player"
-	"github.com/keshon/melodix/pkg/music/sources"
 )
 
 // VoiceAPI is the interface the Discord bot exposes for voice/music commands.
@@ -52,7 +52,11 @@ func (b *Bot) GetOrCreatePlayer(guildID string) *player.Player {
 
 // FindUserVoiceState returns the voice channel a user is currently in, or an error if none.
 func (b *Bot) FindUserVoiceState(guildID, userID string) (*UserVoiceState, error) {
-	guild, err := b.dg.State.Guild(guildID)
+	sess := b.session()
+	if sess == nil {
+		return nil, fmt.Errorf("no Discord session")
+	}
+	guild, err := sess.State.Guild(guildID)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving guild: %w", err)
 	}

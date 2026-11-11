@@ -19,17 +19,17 @@ linters:
       exclude-functions:
         # Best-effort Discord UI replies: a failed followup is logged or ignored
         # by design (the interaction may already be gone).
-        - github.com/keshon/melodix/internal/discord/reply.FollowupEmbedEphemeral
-        - github.com/keshon/melodix/internal/discord/reply.FollowupEmbed
-        - github.com/keshon/melodix/internal/discord/reply.FollowupEphemeral
-        - github.com/keshon/melodix/internal/discord/reply.RespondEmbedEphemeral
+        - github.com/ArmaRizki/ArmekBot/internal/discord/reply.FollowupEmbedEphemeral
+        - github.com/ArmaRizki/ArmekBot/internal/discord/reply.FollowupEmbed
+        - github.com/ArmaRizki/ArmekBot/internal/discord/reply.FollowupEphemeral
+        - github.com/ArmaRizki/ArmekBot/internal/discord/reply.RespondEmbedEphemeral
         # Idiomatic deferred cleanup where the error has no consumer.
         - (io.Closer).Close
         - (io.ReadCloser).Close
         - (*os.File).Close
         - (*github.com/godeps/opus.Encoder).Reset
-        - (*github.com/keshon/melodix/pkg/music/stream.RecoveryStream).Close
-        - (*github.com/keshon/melodix/pkg/music/sink.SpeakerProvider).Close
+        - (*github.com/ArmaRizki/ArmekBot/pkg/music/stream.RecoveryStream).Close
+        - (*github.com/ArmaRizki/ArmekBot/pkg/music/sink.SpeakerProvider).Close
         - fmt.Fprint
         - fmt.Fprintf
         - fmt.Fprintln

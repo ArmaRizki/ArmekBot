@@ -160,7 +160,7 @@ func (v *VoiceConnection) Speaking(b bool) (err error) {
 // Disconnect requests disconnect from this voice channel and wait for disconencted
 func (v *VoiceConnection) Disconnect(ctx context.Context) error {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	err := v.session.VoiceStateUpdate(v.GuildID, "", true, true)
 	if err != nil {
@@ -174,7 +174,7 @@ func (v *VoiceConnection) Disconnect(ctx context.Context) error {
 // NOTE: unlock before calling this
 func (v *VoiceConnection) Kill() {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	v.session.Lock()
 	if v.session.VoiceConnections[v.GuildID] == v {
@@ -192,8 +192,14 @@ func (v *VoiceConnection) Kill() {
 		close(v.dead)
 		go func() {
 			time.Sleep(100 * time.Millisecond) // safe
-			close(v.OpusRecv)
-			close(v.OpusSend)
+			// OpusRecv is only created when not deaf; closing a nil channel panics
+			// and takes the whole process down.
+			if v.OpusRecv != nil {
+				close(v.OpusRecv)
+			}
+			if v.OpusSend != nil {
+				close(v.OpusSend)
+			}
 		}()
 	}
 
@@ -269,9 +275,9 @@ type voiceOP8 struct {
 // waitUntilStatus waits for connection to be in given VoiceConnectionStatus
 // returns error if context timeout or VoiceConnection.Err
 func (v *VoiceConnection) waitUntilStatus(ctx context.Context, status VoiceConnectionStatus) error {
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
-	ch := make(chan error)
+	ch := make(chan error, 1)
 
 	go func() {
 		defer close(ch)
@@ -280,6 +286,7 @@ func (v *VoiceConnection) waitUntilStatus(ctx context.Context, status VoiceConne
 		for v.Status != status && v.Status != VoiceConnectionStatusDead {
 			select {
 			case <-ctx.Done():
+				ch <- ctx.Err()
 				return
 			default:
 			}
@@ -301,7 +308,7 @@ func (v *VoiceConnection) waitUntilStatus(ctx context.Context, status VoiceConne
 // wait for VOICE_SERVER_UPDATE and open voice websocket connection.
 func (v *VoiceConnection) onVoiceServerUpdate(ev *VoiceServerUpdate) (err error) {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	v.Cond.L.Lock()
 	defer v.Cond.L.Unlock()
@@ -334,7 +341,7 @@ var ErrVoiceUnknownEncryptionMode = errors.New("unknown encryption mode")
 // This is automatically called by the Open func.
 func (v *VoiceConnection) websocket(ctx context.Context, endpoint string, token string) {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -842,6 +849,7 @@ func (v *VoiceConnection) udpOpen(ctx context.Context) (err error) {
 	addr, err := net.ResolveUDPAddr("udp", host)
 	if err != nil {
 		v.log(LogWarning, "error resolving udp host %s, %s", host, err)
+		v.Cond.L.Unlock()
 		return
 	}
 
@@ -849,6 +857,7 @@ func (v *VoiceConnection) udpOpen(ctx context.Context) (err error) {
 	udpConn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		v.log(LogWarning, "error connecting to udp addr %s, %s", addr.String(), err)
+		v.Cond.L.Unlock()
 		return
 	}
 
@@ -975,7 +984,7 @@ func (v *VoiceConnection) udpKeepAlive(ctx context.Context, udpConn *net.UDPConn
 // pre-encoded opus audio to Discord.  Supposedly.
 func (v *VoiceConnection) opusSender(ctx context.Context, rate, size int) {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	v.Cond.L.Lock()
 	udpConn := v.udpConn
@@ -1103,7 +1112,7 @@ type Packet struct {
 // NOTE :: This function may change names later.
 func (v *VoiceConnection) opusReceiver(ctx context.Context) {
 
-	v.log(LogInformational, "called")
+	v.log(LogDebug, "called")
 
 	v.Cond.L.Lock()
 	udpConn := v.udpConn
@@ -1160,7 +1169,8 @@ func (v *VoiceConnection) opusReceiver(ctx context.Context) {
 		copy(nonce, recvbuf[rlen-4:rlen])
 
 		v.Cond.L.Lock()
-		p.Opus, err = v.cipher.Open(recvbuf[plainLength:plainLength], nonce, recvbuf[plainLength:rlen-4], recvbuf[:plainLength])
+		// nil dst: the plaintext must not alias recvbuf, the next packet overwrites it.
+		p.Opus, err = v.cipher.Open(nil, nonce, recvbuf[plainLength:rlen-4], recvbuf[:plainLength])
 		v.Cond.L.Unlock()
 		if err != nil {
 			v.log(LogInformational, "failed to open udp packet, %v", err)

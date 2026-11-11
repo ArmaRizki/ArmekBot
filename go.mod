@@ -1,4 +1,4 @@
-module github.com/keshon/melodix
+module github.com/ArmaRizki/ArmekBot
 
 go 1.26
 

@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/bwmarrin/discordgo"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 
 	"github.com/rs/zerolog"
 )
@@ -103,18 +103,6 @@ func (m *Syncer) SyncGuildCommands(guildID string) error {
 	m.log.Info().Str("guild_id", guildID).Int("created", created).Int("edited", edited).Int("deleted", deleted).Int("unchanged", unchanged).Msg("commands_sync_done")
 
 	return nil
-}
-
-// SyncAllGuilds syncs commands for every guild the bot is currently in.
-func (m *Syncer) SyncAllGuilds() {
-	if m.dg == nil {
-		return
-	}
-	for _, g := range m.dg.State.Guilds {
-		if err := m.SyncGuildCommands(g.ID); err != nil {
-			m.log.Error().Str("guild_id", g.ID).Err(err).Msg("commands_sync_failed")
-		}
-	}
 }
 
 func (m *Syncer) guildLock(guildID string) *sync.Mutex {

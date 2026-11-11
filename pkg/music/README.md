@@ -39,7 +39,7 @@ flowchart TD
 ## Install
 
 ```bash
-go get github.com/keshon/melodix/pkg/music/...
+go get github.com/ArmaRizki/ArmekBot/pkg/music/...
 ```
 
 ## Quick start
@@ -47,7 +47,9 @@ go get github.com/keshon/melodix/pkg/music/...
 Create a sink provider (e.g. speaker for local playback), a resolver, and a player; then enqueue and play:
 
 ```go
-provider := sink.NewSpeakerProvider()
+import "github.com/ArmaRizki/ArmekBot/pkg/music/sink/speaker"
+
+provider := speaker.NewSpeakerProvider()
 defer provider.Close()
 
 res := resolve.New()
@@ -137,7 +139,7 @@ The sink drives the read loop via `AudioSink.Stream(reader, stopCh)`:
 
 ### Discord / UI: errors and `PlayerStatus`
 
-`Player.PlayerStatus` is a buffered channel meant for a **single long-lived consumer** per player (competing receivers steal events). The Discord voice service runs one status watcher per guild player for async transitions (auto-advance to the next track, natural queue end); slash handlers render interaction-driven outcomes (“Now Playing” / “Track(s) Added”) synchronously since `PlayNext`/enqueue results are known in the handler. The player stores a capped `lastPlaybackUserErr` for consistent embed text.
+`Player.PlayerStatus` is a buffered channel meant for a **single long-lived consumer** per player (competing receivers steal events). The Discord voice service runs one status watcher per guild player for async transitions (auto-advance to the next track, natural queue end); slash handlers render interaction-driven outcomes (“Now Playing” / “Track(s) Added”) synchronously since `PlayNext`/enqueue results are known in the handler.
 
 When wired to Discord, the voice service passes `Options.OnPlaybackFailed` at player construction so a failure after “Now Playing” can **edit the guild status message** (same message id as “Now Playing”) instead of relying on an interaction follow-up that already finished.
 
@@ -173,7 +175,7 @@ Two opt-in playback layers wrap the parser stream inside `RecoveryStream`, both 
 
 - **ffmpeg** — Optional. Used by the transcode parsers (SoundCloud, radio, and the `kkdai-link`/`ytdlp-*` fallbacks) to decode audio; YouTube passthrough (`ytnative-link`, `kkdai-pipe`) needs no ffmpeg. Install it on `PATH` for full source coverage.
 - **yt-dlp** — Optional. If installed, the ytdlp-link and ytdlp-pipe parsers are available; otherwise the library falls back to kkdai/ffmpeg parsers.
-- **ebitengine/oto** — The speaker sink (`sink.NewSpeakerProvider()`) uses [oto](https://github.com/ebitengine/oto/v3) for audio output. Omit the speaker sink if you only need a custom sink (e.g. Discord).
+- **ebitengine/oto** — The speaker sink (`speaker.NewSpeakerProvider()`) uses [oto](https://github.com/ebitengine/oto/v3) for audio output. Omit the speaker sink if you only need a custom sink (e.g. Discord).
 
 ## Documentation
 

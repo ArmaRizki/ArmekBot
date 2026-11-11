@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	ffmpegparser "github.com/keshon/melodix/pkg/music/parsers/ffmpeg"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	ffmpegparser "github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ffmpeg"
 )
 
 func ytdlpPipe(track *parsers.Track, seekSec float64) (opus.Reader, func(), error) {
@@ -59,7 +59,10 @@ func ytdlpPipe(track *parsers.Track, seekSec float64) (opus.Reader, func(), erro
 
 	r, cleanup, err := ffmpegparser.OpusReader(ffmpeg, "ytdlp")
 	if err != nil {
+		// Kill AND wait: a killed-but-unwaited child stays a zombie and its
+		// pipe stays open.
 		_ = ytdlp.Process.Kill()
+		_ = ytdlp.Wait()
 		return nil, nil, err
 	}
 	return r, func() {

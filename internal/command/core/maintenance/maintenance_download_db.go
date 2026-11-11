@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
 )
 
-func runDownloadDB(s *discordgo.Session, e *discordgo.InteractionCreate, storage storage.Storage) error {
+func runDownloadDB(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage) error {
 	guildID := e.GuildID
-	record, err := storage.ExportGuild(guildID)
+	record, err := stor.ExportGuild(guildID)
 	if err != nil {
 		return reply.RespondEmbedEphemeral(s, e, &discordgo.MessageEmbed{
 			Description: fmt.Sprintf("Failed to fetch record: ```%v```", err),

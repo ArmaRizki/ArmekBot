@@ -4,23 +4,23 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
-	"github.com/keshon/melodix/internal/storage"
 )
 
 // RunCmdStatus reports enabled and disabled command groups.
-func RunCmdStatus(s *discordgo.Session, e *discordgo.InteractionCreate, storage storage.Storage) error {
+func RunCmdStatus(s *discordgo.Session, e *discordgo.InteractionCreate, stor *storage.Storage) error {
 	guildID := e.GuildID
 
-	disabledGroups, _ := storage.DisabledGroups(guildID)
+	disabledGroups, _ := stor.DisabledGroups(guildID)
 	disabledMap := make(map[string]bool)
 	for _, g := range disabledGroups {
 		disabledMap[g] = true
 	}
 
 	var enabled, disabled []string
-	for _, group := range getUniqueGroups() {
+	for _, group := range GetUniqueGroups() {
 		if disabledMap[group] {
 			disabled = append(disabled, fmt.Sprintf("`%s`", group))
 		} else {

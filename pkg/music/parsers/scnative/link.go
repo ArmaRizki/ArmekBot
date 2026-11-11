@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/parsers"
-	ffmpegparser "github.com/keshon/melodix/pkg/music/parsers/ffmpeg"
-	"github.com/keshon/melodix/pkg/music/soundcloudapi"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/parsers"
+	ffmpegparser "github.com/ArmaRizki/ArmekBot/pkg/music/parsers/ffmpeg"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/soundcloudapi"
 )
 
 func scnativeLink(track *parsers.Track, seekSec float64) (opus.Reader, func(), error) {

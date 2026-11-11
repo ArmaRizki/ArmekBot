@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 )
 
 func runHelpByGroup() string {
@@ -34,7 +34,7 @@ func runHelpByGroup() string {
 		cmds := groupMap[group]
 		sort.Slice(cmds, func(i, j int) bool { return cmds[i].Name() < cmds[j].Name() })
 		for _, c := range cmds {
-			fmt.Fprintf(&sb, "`%s` - %s\n", c.Name(), c.Description())
+			sb.WriteString(formatCommand(c))
 		}
 		sb.WriteString("\n")
 	}

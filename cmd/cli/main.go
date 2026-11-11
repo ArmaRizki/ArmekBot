@@ -11,15 +11,15 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/ArmaRizki/ArmekBot/internal/applog"
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/musicwire"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/player"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/resolve"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/sink/speaker"
 	"github.com/keshon/buildinfo"
 	"github.com/keshon/datastore"
-	"github.com/keshon/melodix/internal/applog"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/musicwire"
-	"github.com/keshon/melodix/internal/storage"
-	"github.com/keshon/melodix/pkg/music/player"
-	"github.com/keshon/melodix/pkg/music/resolve"
-	"github.com/keshon/melodix/pkg/music/sink"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 	log := applog.Setup("cli", cfg)
 	log.Info().Str("project", info.Project).Msg("cli_starting")
 
-	provider := sink.NewSpeakerProviderWithLogger(log)
+	provider := speaker.NewSpeakerProviderWithLogger(log)
 	defer provider.Close()
 
 	res := resolve.New()
@@ -101,22 +101,45 @@ func main() {
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	// The handler stops playback and closes shutdown; the REPL loop then
+	// returns through main so the deferred cleanup (audio device, datastore)
+	// runs. Exiting here would skip it.
+	shutdown := make(chan struct{})
 	go func() {
 		<-sig
 		fmt.Println("\nShutting down...")
 		cancel()
 		_ = p.Stop(true)
-		os.Exit(0)
+		close(shutdown)
+	}()
+
+	// stdin is read on its own goroutine so the loop can also end on a signal.
+	lines := make(chan string)
+	go func() {
+		defer close(lines)
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			lines <- scanner.Text()
+		}
+		if err := scanner.Err(); err != nil {
+			log.Error().Err(err).Msg("cli_stdin_error")
+		}
 	}()
 
 	fmt.Println("Commands: play <url|query> [source] [parser] | next | stop | queue | status | quit")
-	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
+		var line string
+		select {
+		case <-shutdown:
+			return
+		case l, ok := <-lines:
+			if !ok {
+				return
+			}
+			line = l
 		}
-		line := strings.TrimSpace(scanner.Text())
+		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
@@ -185,9 +208,6 @@ func main() {
 		default:
 			fmt.Println("Unknown command. Use: play | next | stop | queue | status | quit")
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		log.Error().Err(err).Msg("cli_stdin_error")
 	}
 }
 

@@ -5,11 +5,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/watchdog"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/watchdog"
+	"github.com/rs/zerolog"
 )
 
-func (b *Bot) makeSessionUnhealthyNotifier(disconnected chan struct{}) func() {
+// makeSessionUnhealthyNotifier returns the callback the health watchers use to report an
+// unhealthy session. It reports whether the session is going away (true only when the
+// disconnected channel is closed); a false return means the session survives and the
+// watcher must keep watching.
+func (b *Bot) makeSessionUnhealthyNotifier(disconnected chan struct{}) func() bool {
 	var restartOnce sync.Once
 	var unhealthyMu sync.Mutex
 	var unhealthyCount int
@@ -21,14 +26,14 @@ func (b *Bot) makeSessionUnhealthyNotifier(disconnected chan struct{}) func() {
 		}
 	}
 
-	return func() {
+	return func() bool {
 		mode := b.cfg.DiscordUnhealthyMode
 		switch mode {
 		case "ignore":
-			return
+			return false
 		case "restart-voice":
 			invalidateSinks()
-			return
+			return false
 		case "restart-session", "":
 		default:
 			b.log.Warn().Str("mode", mode).Msg("discord_unhealthy_mode_unknown")
@@ -60,7 +65,7 @@ func (b *Bot) makeSessionUnhealthyNotifier(disconnected chan struct{}) func() {
 
 		if !shouldRestart {
 			invalidateSinks()
-			return
+			return false
 		}
 
 		restartOnce.Do(func() {
@@ -68,6 +73,8 @@ func (b *Bot) makeSessionUnhealthyNotifier(disconnected chan struct{}) func() {
 			invalidateSinks()
 			close(disconnected)
 		})
+		// The session is going away (closed now or by an earlier signal).
+		return true
 	}
 }
 
@@ -75,19 +82,37 @@ func (b *Bot) startSessionHealthWatchers(
 	sessionCtx context.Context,
 	dg *discordgo.Session,
 	tracker *watchdog.Tracker,
-	notifyUnhealthy func(),
+	notifyUnhealthy func() bool,
 ) {
+	// The silence watcher re-arms every tick while the gateway stays silent, so the
+	// warning is logged once per silence episode: a new last-WS timestamp means the
+	// gateway recovered and went silent again.
+	var silenceMu sync.Mutex
+	var lastWS time.Time
+	firstInEpisode := func(meta watchdog.WSSilenceMeta) bool {
+		silenceMu.Lock()
+		defer silenceMu.Unlock()
+		first := lastWS.IsZero() || !lastWS.Equal(meta.LastWS)
+		lastWS = meta.LastWS
+		return first
+	}
+
 	go watchdog.NewWSSilence(
 		tracker,
 		b.cfg.WSSilenceTimeout,
 		dg.HeartbeatLatency,
-		func(meta watchdog.WSSilenceMeta) {
-			b.log.Warn().
-				Dur("since_last_ws", meta.SinceLastWS).
+		func(meta watchdog.WSSilenceMeta) bool {
+			var ev *zerolog.Event
+			if firstInEpisode(meta) {
+				ev = b.log.Warn()
+			} else {
+				ev = b.log.Debug()
+			}
+			ev.Dur("since_last_ws", meta.SinceLastWS).
 				Dur("timeout", meta.Timeout).
 				Dur("heartbeat_latency", meta.HeartbeatLatency).
 				Msg("gateway_silent")
-			notifyUnhealthy()
+			return notifyUnhealthy()
 		},
 		watchdog.WSSilenceOptions{SettleDelay: 15 * time.Second, Tick: 10 * time.Second},
 	).Run(sessionCtx)

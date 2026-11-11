@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/keshon/melodix/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 )
 
 // Blob format: a 5-byte header (magic + version) followed by a flat log of

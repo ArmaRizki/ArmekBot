@@ -3,9 +3,9 @@ package middleware
 import (
 	"context"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/storage"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/storage"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -30,22 +30,6 @@ func WithGroupAccessCheck() command.Middleware {
 				} else {
 					respond = func(_ string) {}
 				}
-			case *cmdadapter.ComponentInteractionContext:
-				guildID, stor = v.Event.GuildID, v.Storage
-				if v.Responder != nil {
-					respond = func(msg string) {
-						_ = v.Responder.RespondEmbedEphemeral(v.Session, v.Event, &discordgo.MessageEmbed{Description: msg})
-					}
-				} else {
-					respond = func(_ string) {}
-				}
-				if disabledGroup(c, guildID, stor, respond) {
-					return nil
-				}
-				if ch, ok := command.Root(c).(cmdadapter.ComponentInteractionHandler); ok {
-					return ch.Component(v)
-				}
-				return nil
 			case *cmdadapter.MessageApplicationCommandContext:
 				guildID, stor = v.Event.GuildID, v.Storage
 				if v.Responder != nil {

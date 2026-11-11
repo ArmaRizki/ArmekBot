@@ -15,13 +15,13 @@ exit /b 1
 
 :discord
 set "MAIN_PKG=%SCRIPT_DIR%\cmd\discord"
-set "OUTPUT=%SCRIPT_DIR%\melodix-discord.exe"
+set "OUTPUT=%SCRIPT_DIR%\armekbot-discord.exe"
 set "DESC=Discord music bot that allows you to play music from YouTube, SoundCloud and internet radio streams."
 goto :build
 
 :cli
 set "MAIN_PKG=%SCRIPT_DIR%\cmd\cli"
-set "OUTPUT=%SCRIPT_DIR%\melodix-cli.exe"
+set "OUTPUT=%SCRIPT_DIR%\armekbot-cli.exe"
 set "DESC=CLI music player - same playback engine as the Discord bot."
 goto :build
 
@@ -41,7 +41,7 @@ if "%GIT_COMMIT%"=="" set "GIT_COMMIT=none"
 set "LD=-X github.com/keshon/buildinfo.Version=dev"
 set "LD=%LD% -X github.com/keshon/buildinfo.Commit=%GIT_COMMIT%"
 set "LD=%LD% -X github.com/keshon/buildinfo.BuildTime=%BUILD_DATE%"
-set "LD=%LD% -X github.com/keshon/buildinfo.Project=Melodix"
+set "LD=%LD% -X github.com/keshon/buildinfo.Project=ArmekBot"
 set "LD=%LD% -X 'github.com/keshon/buildinfo.Description=%DESC%'"
 
 echo [2/3] Building %OUTPUT%...

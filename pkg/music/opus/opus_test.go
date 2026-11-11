@@ -13,11 +13,11 @@ import (
 
 // TestDemuxRealSample cross-checks the demuxer against a real YouTube WebM/Opus
 // file (its packet count must match `ffprobe -show_packets`). Opt-in:
-// MELODIX_WEBM=path/to/sample.webm go test -run RealSample -v ./pkg/music/opus
+// ARMEKBOT_WEBM=path/to/sample.webm go test -run RealSample -v ./pkg/music/opus
 func TestDemuxRealSample(t *testing.T) {
-	path := os.Getenv("MELODIX_WEBM")
+	path := os.Getenv("ARMEKBOT_WEBM")
 	if path == "" {
-		t.Skip("set MELODIX_WEBM to a real .webm to cross-check against ffprobe")
+		t.Skip("set ARMEKBOT_WEBM to a real .webm to cross-check against ffprobe")
 	}
 	f, err := os.Open(path)
 	if err != nil {

@@ -1,8 +1,8 @@
 package cmdadapter
 
 import (
+	"github.com/ArmaRizki/ArmekBot/internal/config"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/config"
 )
 
 func ConfigFromInvocation(inv *command.Invocation) *config.Config {

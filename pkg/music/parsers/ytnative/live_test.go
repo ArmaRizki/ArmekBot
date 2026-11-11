@@ -5,16 +5,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
 	gopus "github.com/godeps/opus"
-	"github.com/keshon/melodix/pkg/music/opus"
 )
 
 // TestLivePassthrough exercises the full passthrough path against real YouTube:
 // InnerTube → pick Opus/WebM → HTTP stream → demux → framing guard → decode.
-// It proves a track plays with no ffmpeg. Opt-in via MELODIX_LIVE_TESTS=1.
+// It proves a track plays with no ffmpeg. Opt-in via ARMEKBOT_LIVE_TESTS=1.
 func TestLivePassthrough(t *testing.T) {
-	if os.Getenv("MELODIX_LIVE_TESTS") == "" {
-		t.Skip("set MELODIX_LIVE_TESTS=1 to hit real YouTube")
+	if os.Getenv("ARMEKBOT_LIVE_TESTS") == "" {
+		t.Skip("set ARMEKBOT_LIVE_TESTS=1 to hit real YouTube")
 	}
 	pr, err := fetchPlayer(httpClient, playerEndpoint, "dQw4w9WgXcQ")
 	if err != nil {
@@ -59,10 +59,10 @@ func TestLivePassthrough(t *testing.T) {
 // TestLiveInnerTube hits the real InnerTube API with the ANDROID_VR client and checks
 // that a direct (cipher-free) audio URL comes back and the CDN accepts our UA.
 // This is the canary for clientVersion rot.
-// Opt-in: MELODIX_LIVE_TESTS=1 go test -run Live -v ./pkg/music/parsers/ytnative
+// Opt-in: ARMEKBOT_LIVE_TESTS=1 go test -run Live -v ./pkg/music/parsers/ytnative
 func TestLiveInnerTube(t *testing.T) {
-	if os.Getenv("MELODIX_LIVE_TESTS") == "" {
-		t.Skip("set MELODIX_LIVE_TESTS=1 to hit real YouTube")
+	if os.Getenv("ARMEKBOT_LIVE_TESTS") == "" {
+		t.Skip("set ARMEKBOT_LIVE_TESTS=1 to hit real YouTube")
 	}
 
 	pr, err := fetchPlayer(httpClient, playerEndpoint, "dQw4w9WgXcQ")

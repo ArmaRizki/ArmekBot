@@ -143,9 +143,9 @@ jobs:
                       -X github.com/keshon/buildinfo.Version=dev \
                       -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} \
                       -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE} \
-                      -X github.com/keshon/buildinfo.Project=Melodix \
+                      -X github.com/keshon/buildinfo.Project=ArmekBot \
                       -X 'github.com/keshon/buildinfo.Description=Discord music bot that allows you to play music from YouTube, SoundCloud and internet radio streams.'" \
-                    -o dist/melodix-discord${{ steps.bin.outputs.ext }} \
+                    -o dist/armekbot-discord${{ steps.bin.outputs.ext }} \
                     ./cmd/discord/
 
             - name: Build CLI player
@@ -164,18 +164,18 @@ jobs:
                       -X github.com/keshon/buildinfo.Version=dev \
                       -X github.com/keshon/buildinfo.Commit=${GIT_COMMIT} \
                       -X github.com/keshon/buildinfo.BuildTime=${BUILD_DATE} \
-                      -X github.com/keshon/buildinfo.Project=Melodix \
+                      -X github.com/keshon/buildinfo.Project=ArmekBot \
                       -X 'github.com/keshon/buildinfo.Description=CLI music player - same playback engine as the Discord bot.'" \
-                    -o dist/melodix-cli${{ steps.bin.outputs.ext }} \
+                    -o dist/armekbot-cli${{ steps.bin.outputs.ext }} \
                     ./cmd/cli/
 
             - name: Prepare build bundle
               run: |
-                  PKG_ROOT="melodix-${{ matrix.goos }}-${{ matrix.goarch }}"
+                  PKG_ROOT="armekbot-${{ matrix.goos }}-${{ matrix.goarch }}"
                   mkdir -p "${PKG_ROOT}"
 
-                  cp "dist/melodix-discord${{ steps.bin.outputs.ext }}" "${PKG_ROOT}/"
-                  cp "dist/melodix-cli${{ steps.bin.outputs.ext }}" "${PKG_ROOT}/"
+                  cp "dist/armekbot-discord${{ steps.bin.outputs.ext }}" "${PKG_ROOT}/"
+                  cp "dist/armekbot-cli${{ steps.bin.outputs.ext }}" "${PKG_ROOT}/"
 
                   cp README.md LICENSE "${PKG_ROOT}/"
 
@@ -194,6 +194,6 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: melodix-${{ matrix.goos }}-${{ matrix.goarch }}
-                  path: dist/melodix-${{ matrix.goos }}-${{ matrix.goarch }}.zip
+                  name: armekbot-${{ matrix.goos }}-${{ matrix.goarch }}
+                  path: dist/armekbot-${{ matrix.goos }}-${{ matrix.goarch }}.zip
                   retention-days: 14

@@ -22,7 +22,7 @@ type Transcoding struct {
 	} `json:"format"`
 }
 
-// Track is the api-v2 track resource (only the fields Melodix needs).
+// Track is the api-v2 track resource (only the fields ArmekBot needs).
 type Track struct {
 	Title        string `json:"title"`
 	DurationMS   int64  `json:"duration"`

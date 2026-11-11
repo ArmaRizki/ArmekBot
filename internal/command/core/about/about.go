@@ -4,10 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
 	"github.com/keshon/buildinfo"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
-	"github.com/keshon/melodix/internal/discord/reply"
 )
 
 type About struct{}
@@ -41,12 +41,12 @@ func (c *About) Run(ctx interface{}) error {
 	// Info fields for embed
 	fields := []*discordgo.MessageEmbedField{
 		{
-			Name:  "Developed by Señor Mega",
+			Name:  "Originally developed by Señor Mega",
 			Value: "[LinkedIn](https://www.linkedin.com/in/keshon), [GitHub](https://github.com/keshon), [Homepage](https://keshon.ru)",
 		},
 		{
 			Name:  "Repository",
-			Value: "https://github.com/keshon/melodix\nCommit: " + info.Commit,
+			Value: "https://github.com/ArmaRizki/ArmekBot\nCommit: " + info.Commit,
 		},
 		{
 			Name:  "Release",

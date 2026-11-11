@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/keshon/melodix/internal/playbackerr"
+	"github.com/ArmaRizki/ArmekBot/internal/playbackerr"
 )
 
 // PlaybackErrorString applies the same length limits as PlaybackErrorDescription for a raw message.

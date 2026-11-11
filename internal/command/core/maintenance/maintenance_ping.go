@@ -3,8 +3,8 @@ package maintenance
 import (
 	"fmt"
 
+	"github.com/ArmaRizki/ArmekBot/internal/discord/reply"
 	"github.com/bwmarrin/discordgo"
-	"github.com/keshon/melodix/internal/discord/reply"
 )
 
 func runPing(s *discordgo.Session, e *discordgo.InteractionCreate) error {

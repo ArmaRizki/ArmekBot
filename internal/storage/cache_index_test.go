@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/keshon/melodix/pkg/music/cache"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/cache"
 )
 
 func TestCacheIndexRoundTrip(t *testing.T) {

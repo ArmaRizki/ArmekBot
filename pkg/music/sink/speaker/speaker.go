@@ -1,13 +1,13 @@
-package sink
+package speaker
 
 import (
 	"io"
 	"sync"
 	"time"
 
+	"github.com/ArmaRizki/ArmekBot/pkg/music/opus"
+	"github.com/ArmaRizki/ArmekBot/pkg/music/stream"
 	"github.com/ebitengine/oto/v3"
-	"github.com/keshon/melodix/pkg/music/opus"
-	"github.com/keshon/melodix/pkg/music/stream"
 	"github.com/rs/zerolog"
 )
 

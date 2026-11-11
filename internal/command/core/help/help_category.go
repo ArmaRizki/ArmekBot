@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ArmaRizki/ArmekBot/internal/config"
+	"github.com/ArmaRizki/ArmekBot/internal/discord/cmdadapter"
 	"github.com/keshon/command"
-	"github.com/keshon/melodix/internal/config"
-	"github.com/keshon/melodix/internal/discord/cmdadapter"
 )
 
 func runHelpByCategory() string {
@@ -46,7 +46,7 @@ func runHelpByCategory() string {
 		cmds := categoryMap[cat.Name]
 		sort.Slice(cmds, func(i, j int) bool { return cmds[i].Name() < cmds[j].Name() })
 		for _, c := range cmds {
-			fmt.Fprintf(&sb, "`%s` - %s\n", c.Name(), c.Description())
+			sb.WriteString(formatCommand(c))
 		}
 		sb.WriteString("\n")
 	}
