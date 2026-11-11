@@ -132,6 +132,11 @@ type Session struct {
 	// stores session ID of current Gateway connection
 	sessionID string
 
+	// sessionMu guards sessionID and resumeGatewayURL. The session lock cannot
+	// be used here: Open holds it while the handshake dispatches the READY
+	// event, and onReady runs inside that handshake.
+	sessionMu sync.RWMutex
+
 	// used to make sure gateway websocket writes do not happen concurrently
 	wsMutex sync.Mutex
 }

@@ -49,6 +49,23 @@ type resumePacket struct {
 	} `json:"d"`
 }
 
+// sessionState returns the session id and the resume gateway url of the
+// current gateway connection.
+func (s *Session) sessionState() (string, string) {
+	s.sessionMu.RLock()
+	defer s.sessionMu.RUnlock()
+	return s.sessionID, s.resumeGatewayURL
+}
+
+// clearSessionState forgets the session id and the resume gateway url, so the
+// next connection identifies instead of resuming.
+func (s *Session) clearSessionState() {
+	s.sessionMu.Lock()
+	s.sessionID = ""
+	s.resumeGatewayURL = ""
+	s.sessionMu.Unlock()
+}
+
 // Open creates a websocket connection to Discord.
 // See: https://discord.com/developers/docs/topics/gateway#connecting
 func (s *Session) Open() error {
@@ -69,10 +86,11 @@ func (s *Session) Open() error {
 	sequence := atomic.LoadInt64(s.sequence)
 
 	var gateway string
+	sessionID, resumeGatewayURL := s.sessionState()
 	// Get the gateway to use for the Websocket connection
-	if sequence != 0 && s.sessionID != "" && s.resumeGatewayURL != "" {
-		s.log(LogDebug, "using resume gateway %s", s.resumeGatewayURL)
-		gateway = s.resumeGatewayURL
+	if sequence != 0 && sessionID != "" && resumeGatewayURL != "" {
+		s.log(LogDebug, "using resume gateway %s", resumeGatewayURL)
+		gateway = resumeGatewayURL
 	} else {
 		if s.gateway == "" {
 			s.gateway, err = s.Gateway()
@@ -137,7 +155,8 @@ func (s *Session) Open() error {
 
 	// Now we send either an Op 2 Identity if this is a brand new
 	// connection or Op 6 Resume if we are resuming an existing connection.
-	if s.sessionID == "" && sequence == 0 {
+	sessionID, _ = s.sessionState()
+	if sessionID == "" && sequence == 0 {
 
 		// Send Op 2 Identity Packet
 		err = s.identify()
@@ -152,7 +171,7 @@ func (s *Session) Open() error {
 		p := resumePacket{}
 		p.Op = 6
 		p.Data.Token = s.Token
-		p.Data.SessionID = s.sessionID
+		p.Data.SessionID = sessionID
 		p.Data.Sequence = sequence
 
 		s.log(LogInformational, "sending resume packet to gateway")
@@ -642,8 +661,7 @@ func (s *Session) onEvent(messageType int, message []byte) (*Event, error) {
 
 		if !resumable {
 			s.log(LogInformational, "Gateway session is not resumable, discarding its information")
-			s.resumeGatewayURL = ""
-			s.sessionID = ""
+			s.clearSessionState()
 			atomic.StoreInt64(s.sequence, 0)
 		}
 
