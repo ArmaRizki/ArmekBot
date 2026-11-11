@@ -1,0 +1,7 @@
+# Build context is this directory (docker/), the source lives in ./src.
+src/.git
+src/data
+src/docs
+src/assets
+data
+*.md

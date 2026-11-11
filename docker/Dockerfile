@@ -16,10 +16,13 @@ RUN go mod download
 # Copy rest of the source
 COPY src .
 
-# Build with embedded metadata, CGO enabled
+# Build with embedded metadata, CGO enabled.
+# No GOARCH here: CGO builds for the builder's own architecture, so the image
+# matches the host (arm64 servers included). Cross-compiling with CGO would
+# need a matching cross toolchain.
 RUN BUILD_DATE=$(date -u +"%Y-%m-%dT%H-%M-%SZ") && \
     GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "none") && \
-    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build \
+    CGO_ENABLED=1 GOOS=linux go build \
         -o app \
         -ldflags="-s -w \
             -X github.com/keshon/buildinfo.Version=dev \
