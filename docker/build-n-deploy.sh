@@ -54,29 +54,21 @@ else
     [ -d "$SRC_DIR" ] || die "${SRC_DIR} not found (set GIT=true to clone it)"
 fi
 
-# --- 3. Stop the running stack ----------------------------------------------
-step "Stopping containers"
-docker compose -f "$COMPOSE_FILE" down --remove-orphans
-
-# --- 4. Remove the old image ------------------------------------------------
-step "Removing old image (${IMAGE})"
-old_images=$(docker images --filter=reference="$IMAGE" -q)
-if [ -n "$old_images" ]; then
-    # shellcheck disable=SC2086  # intentional split: pass each image id as a separate arg
-    docker rmi -f $old_images || true
-else
-    info "none found"
-fi
-
-# --- 5. Build the new image -------------------------------------------------
+# --- 3. Build the new image -------------------------------------------------
+# The build runs before the stack goes down: a failed build then leaves the
+# running container untouched.
 step "Building ${IMAGE}"
 DOCKER_BUILDKIT=1 docker build -t "$IMAGE" .
 
-# --- 6. Start the stack -----------------------------------------------------
+# --- 4. Stop the running stack ----------------------------------------------
+step "Stopping containers"
+docker compose -f "$COMPOSE_FILE" down --remove-orphans
+
+# --- 5. Start the stack -----------------------------------------------------
 step "Starting containers"
 docker compose -f "$COMPOSE_FILE" up -d
 
-# --- 7. Prune dangling artifacts --------------------------------------------
+# --- 6. Prune dangling artifacts --------------------------------------------
 step "Pruning dangling images"
 docker image prune -f
 
