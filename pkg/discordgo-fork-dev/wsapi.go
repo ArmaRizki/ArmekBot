@@ -760,13 +760,22 @@ func (s *Session) ChannelVoiceJoin(ctx context.Context, gID, cID string, mute, d
 	}
 
 	voice.Cond.L.Lock()
+	// Already connected to this channel: Discord answers a repeated join with no
+	// VOICE_SERVER_UPDATE, so waiting for Ready below would only burn the context
+	// deadline while the voice socket is perfectly able to carry audio.
+	if voice.Status == VoiceConnectionStatusReady && voice.ChannelID == cID {
+		voice.session = s
+		voice.LogLevel = s.LogLevel
+		voice.Cond.L.Unlock()
+		return
+	}
 	// A live connection keeps its Cond and dead channel: replacing them strands
 	// goroutines waiting on the old ones. Only a dead connection starts a new life.
 	if voice.Status == VoiceConnectionStatusDead {
 		voice.dead = make(chan struct{})
+		voice.Status = VoiceConnectionStatusNew
 	}
 	voice.Dead = voice.dead
-	voice.Status = VoiceConnectionStatusNew
 	voice.GuildID = gID
 	voice.session = s
 	voice.LogLevel = s.LogLevel
@@ -778,6 +787,11 @@ func (s *Session) ChannelVoiceJoin(ctx context.Context, gID, cID string, mute, d
 	}
 
 	err = voice.waitUntilStatus(ctx, VoiceConnectionStatusReady)
+	if err == nil {
+		voice.Cond.L.Lock()
+		voice.ChannelID = cID
+		voice.Cond.L.Unlock()
+	}
 
 	return
 }
@@ -836,6 +850,7 @@ func (s *Session) onVoiceStateUpdate(st *VoiceStateUpdate) {
 		voice.Cond.L.Lock()
 		defer voice.Cond.L.Unlock()
 		voice.sessionID = st.SessionID
+		voice.ChannelID = st.ChannelID
 		voice.mute = st.Mute
 		voice.deaf = st.Deaf
 		voice.Cond.Broadcast()

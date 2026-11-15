@@ -66,6 +66,10 @@ type VoiceConnection struct {
 	LogLevel int
 	GuildID  string
 
+	// ChannelID is the voice channel this connection is in, as last confirmed by
+	// Discord. Guarded by Cond.L.
+	ChannelID string
+
 	deaf     bool
 	mute     bool
 	speaking bool

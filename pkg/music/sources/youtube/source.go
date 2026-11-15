@@ -81,13 +81,15 @@ func (y *Source) SourceName() string {
 }
 
 func (y *Source) AvailableParsers() []string {
-	// Passthrough paths first (ytnative, then kkdai-pipe — no ffmpeg), then the
-	// ffmpeg-encode fallbacks (kkdai-link, yt-dlp).
+	// yt-dlp first: YouTube answers the native extractors with "Sign in to
+	// confirm you're not a bot" (or a 403 on the media URL) on many networks, and
+	// yt-dlp is the only one that keeps up with it. The native parsers stay as
+	// fallbacks for hosts without the yt-dlp binary.
 	return []string{
+		source.ParserYtdlpLink,
+		source.ParserYtdlpPipe,
 		source.ParserYtnativeLink,
 		source.ParserKkdaiPipe,
 		source.ParserKkdaiLink,
-		source.ParserYtdlpLink,
-		source.ParserYtdlpPipe,
 	}
 }
