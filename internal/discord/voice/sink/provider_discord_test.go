@@ -26,3 +26,19 @@ func TestNewDiscordSinkProvider_DefaultVoiceReadyDelay(t *testing.T) {
 		t.Fatalf("unexpected default delay: %v", p.voiceReadyDelay)
 	}
 }
+
+// A connection Discord ended keeps its channel ID, so the cache must not reuse it:
+// handing it out makes the player stream into a socket that is already gone.
+func TestAliveRejectsDeadConnection(t *testing.T) {
+	dead := make(chan struct{})
+	close(dead)
+	if alive(&discordgo.VoiceConnection{Dead: dead}) {
+		t.Fatal("a closed dead channel must count as gone")
+	}
+	if !alive(&discordgo.VoiceConnection{Dead: make(chan struct{})}) {
+		t.Fatal("a live connection must count as alive")
+	}
+	if alive(nil) {
+		t.Fatal("nil is not a connection")
+	}
+}

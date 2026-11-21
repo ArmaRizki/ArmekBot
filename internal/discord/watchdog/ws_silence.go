@@ -87,6 +87,12 @@ func (w *WSSilence) Run(ctx context.Context) {
 			if w.heartbeatLatency != nil {
 				lat = w.heartbeatLatency()
 			}
+			// A heartbeat ACK newer than our last heartbeat proves the socket is
+			// alive: an idle bot receives no gateway frames at all, so "no frames"
+			// alone is not silence. Only a gateway that stopped acknowledging is.
+			if lat > 0 {
+				continue
+			}
 			if w.onUnhealthy(WSSilenceMeta{
 				SinceLastWS:      since,
 				HeartbeatLatency: lat,

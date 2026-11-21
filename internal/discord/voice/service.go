@@ -63,6 +63,11 @@ type Service struct {
 	// guild. Closing it ends the watcher goroutine (the player's status channel is
 	// never closed, so it is the only exit condition).
 	statusWatchers map[string]chan struct{}
+
+	// lastVoiceLoss records when a guild's voice connection dropped on its own, so
+	// a connection Discord keeps killing cannot turn into a reconnect storm.
+	voiceLossMu   sync.Mutex
+	lastVoiceLoss map[string]time.Time
 }
 
 // New creates a voice service for the given session getter and config.
@@ -79,6 +84,7 @@ func NewVoiceService(getSession SessionGetter, cfg *config.Config, store *storag
 		stayConnectedGuilds:     make(map[string]bool),
 		reconnectTargets:        make(map[string]stayConnectedTarget),
 		statusWatchers:          make(map[string]chan struct{}),
+		lastVoiceLoss:           make(map[string]time.Time),
 	}
 }
 
@@ -170,6 +176,7 @@ func (s *Service) GetOrCreatePlayer(guildID string) *player.Player {
 	if !ok {
 		voiceDelay := time.Duration(s.cfg.VoiceReadyDelayMs) * time.Millisecond
 		provider = sink.NewDiscordSinkProvider(s.getSession, guildID, voiceDelay, s.log)
+		provider.SetOnVoiceLost(func(channelID string) { s.onVoiceLost(guildID, channelID) })
 		s.sinkProviders[guildID] = provider
 	}
 	recoveryMode, ok := player.ParseTransportRecoveryMode(s.cfg.PlayerTransportRecoveryMode)
@@ -380,6 +387,47 @@ func (s *Service) JoinVoiceChannel(guildID, channelID string) error {
 	}
 	_, err := provider.Sink(channelID)
 	return err
+}
+
+// voiceRejoinCooldown limits automatic rejoins after a voice drop. Discord keeps
+// ending the connection right after a join when it rate limits the bot (4021) or
+// the channel is gone, and an unthrottled rejoin would hammer the API.
+const voiceRejoinCooldown = 30 * time.Second
+
+// onVoiceLost handles a voice connection Discord dropped on its own. Nothing else
+// in the bot notices: the voice close code never reaches the gateway, so without
+// this the bot sits outside the channel until the next gateway reconnect.
+func (s *Service) onVoiceLost(guildID, channelID string) {
+	s.log.Warn().Str("guild_id", guildID).Str("channel_id", channelID).Msg("voice_connection_lost")
+
+	if !s.IsStayConnected(guildID) {
+		return
+	}
+
+	s.voiceLossMu.Lock()
+	last := s.lastVoiceLoss[guildID]
+	now := time.Now()
+	if !last.IsZero() && now.Sub(last) < voiceRejoinCooldown {
+		s.voiceLossMu.Unlock()
+		s.log.Warn().Str("guild_id", guildID).Msg("voice_rejoin_skipped_backoff")
+		return
+	}
+	s.lastVoiceLoss[guildID] = now
+	s.voiceLossMu.Unlock()
+
+	s.mu.RLock()
+	provider := s.sinkProviders[guildID]
+	s.mu.RUnlock()
+	if provider == nil {
+		return
+	}
+	// Go through the provider, not ChannelVoiceJoin: it owns the cached connection,
+	// so the rejoin also repairs the cache the player reads.
+	if _, err := provider.Sink(channelID); err != nil {
+		s.log.Warn().Str("guild_id", guildID).Str("channel_id", channelID).Err(err).Msg("voice_rejoin_failed")
+		return
+	}
+	s.log.Info().Str("guild_id", guildID).Str("channel_id", channelID).Msg("voice_rejoined")
 }
 
 // SetStayConnected enables or disables 24/7 stay-connected mode for a guild.

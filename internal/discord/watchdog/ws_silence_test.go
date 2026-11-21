@@ -43,3 +43,57 @@ func TestWSSilenceKeepsWatchingUntilSessionGoesAway(t *testing.T) {
 		t.Fatalf("expected 3 unhealthy signals, got %d", got)
 	}
 }
+
+// An idle gateway is not a dead one: no events arrive for hours while the
+// heartbeat keeps being acknowledged. Reporting that as silence restarted the
+// session (and disconnected voice) on every idle minute.
+func TestWSSilenceIgnoresIdleGatewayWithAcknowledgedHeartbeat(t *testing.T) {
+	tracker := NewTracker()
+	tracker.MarkReadyNow()
+
+	var calls int32
+	w := NewWSSilence(
+		tracker,
+		time.Millisecond,
+		func() time.Duration { return 250 * time.Millisecond },
+		func(WSSilenceMeta) bool {
+			atomic.AddInt32(&calls, 1)
+			return false
+		},
+		WSSilenceOptions{SettleDelay: time.Millisecond, Tick: 2 * time.Millisecond},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Millisecond)
+	defer cancel()
+	w.Run(ctx)
+
+	if got := atomic.LoadInt32(&calls); got != 0 {
+		t.Fatalf("expected no unhealthy signal while heartbeats are acknowledged, got %d", got)
+	}
+}
+
+// The silence check must still fire when the heartbeat is not acknowledged: a
+// negative latency means our last heartbeat is newer than the last ACK.
+func TestWSSilenceReportsSilenceWithoutHeartbeatAck(t *testing.T) {
+	tracker := NewTracker()
+	tracker.MarkReadyNow()
+
+	var calls int32
+	w := NewWSSilence(
+		tracker,
+		time.Millisecond,
+		func() time.Duration { return -2 * time.Minute },
+		func(WSSilenceMeta) bool {
+			return atomic.AddInt32(&calls, 1) >= 1
+		},
+		WSSilenceOptions{SettleDelay: time.Millisecond, Tick: 2 * time.Millisecond},
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	w.Run(ctx)
+
+	if got := atomic.LoadInt32(&calls); got != 1 {
+		t.Fatalf("expected the silence signal, got %d", got)
+	}
+}

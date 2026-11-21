@@ -341,6 +341,31 @@ var ErrVoiceReconnectionLimit = errors.New("reconnection limit reached")
 // ErrVoiceUnknownEncryptionMode means Discord requested encryption mode which is not supported
 var ErrVoiceUnknownEncryptionMode = errors.New("unknown encryption mode")
 
+// closeCode extracts the code and reason text of a websocket close frame. The
+// reason is what Discord writes next to the code, e.g. "Disconnected".
+func closeCode(err error) (int, string) {
+	var ce *websocket.CloseError
+	if errors.As(err, &ce) {
+		return ce.Code, ce.Text
+	}
+	return websocket.CloseAbnormalClosure, err.Error()
+}
+
+// voiceCloseReason explains the voice close codes that end a session for good.
+func voiceCloseReason(code int) string {
+	switch code {
+	case 4014:
+		return "disconnected: kicked, moved, channel deleted or session invalidated"
+	case 4017:
+		return "DAVE required but unsupported"
+	case 4021:
+		return "rate limited"
+	case 4022:
+		return "call terminated"
+	}
+	return "unknown"
+}
+
 // websocket open the voice websocket, handle reconnect, and listens on it for messages and passes them to the voice event handler.
 // This is automatically called by the Open func.
 func (v *VoiceConnection) websocket(ctx context.Context, endpoint string, token string) {
@@ -521,7 +546,16 @@ func (v *VoiceConnection) websocket(ctx context.Context, endpoint string, token 
 				// reconnect: 4014 manual disconnect, 4017 DAVE required but
 				// unsupported, 4021 rate limited, 4022 call terminated.
 				if websocket.IsCloseError(err, 4014, 4017, 4021, 4022) {
-					v.log(LogInformational, "received close code disconnected")
+					code, reason := closeCode(err)
+					// This is the only place the bot can learn it left the channel:
+					// the close code arrives on the voice socket, never on the
+					// gateway, so without this line a drop is completely silent.
+					v.log(LogWarning, "voice connection closed by Discord, code %d (%s), reason %q",
+						code, voiceCloseReason(code), reason)
+					// Mark it dead and drop it from the session, so a later join
+					// starts a fresh connection instead of reusing this one, and
+					// whoever streams audio sees the loss instead of a silent stall.
+					v.Kill()
 					return
 				}
 

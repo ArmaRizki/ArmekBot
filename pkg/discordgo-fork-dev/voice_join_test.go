@@ -82,3 +82,26 @@ func TestChannelVoiceJoinWaitsForFreshConnection(t *testing.T) {
 		t.Fatalf("expected ErrWSNotFound, got %v", err)
 	}
 }
+
+// A dead connection is not reused even when it still names the requested channel:
+// Discord ended that session, so the join has to start a new one.
+func TestChannelVoiceJoinRejoinsDeadConnection(t *testing.T) {
+	s := newTestSession()
+	dead := make(chan struct{})
+	close(dead)
+	s.VoiceConnections["guild"] = &VoiceConnection{
+		Cond:      sync.NewCond(&sync.Mutex{}),
+		dead:      dead,
+		Dead:      dead,
+		Status:    VoiceConnectionStatusDead,
+		ChannelID: "chan-a",
+		GuildID:   "guild",
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	if _, err := s.ChannelVoiceJoin(ctx, "guild", "chan-a", false, true); !errors.Is(err, ErrWSNotFound) {
+		t.Fatalf("expected a fresh join attempt (ErrWSNotFound), got %v", err)
+	}
+}
